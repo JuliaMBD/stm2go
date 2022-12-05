@@ -1,4 +1,4 @@
-package sm2go
+package stm2go
 
 import (
 	"fmt"
