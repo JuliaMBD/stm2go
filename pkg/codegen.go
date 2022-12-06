@@ -5,19 +5,38 @@ import (
 )
 
 type GoSource struct {
-	pkgname string
-	out     io.Writer
+	fullpkgname string
+	pkgname     string
+	out         io.Writer
 }
 
 func (g *GoSource) writeln(s string) {
 	g.out.Write([]byte(s + "\n"))
 }
 
-func NewGoSource(out io.Writer, s string) *GoSource {
+// A function to create GoSource
+//   out: io.Writer (e.g. os.Stdout)
+//   d: domain name for package
+//   s: package name
+func NewGoSource(out io.Writer, d string, s string) *GoSource {
 	return &GoSource{
-		pkgname: s,
-		out:     out,
+		fullpkgname: d + "/" + s,
+		pkgname:     s,
+		out:         out,
 	}
+}
+
+// A function to make the map for transitions
+func makeTransitionMap(ts []*Transition) map[*State][]*Transition {
+	m := make(map[*State][]*Transition)
+	for _, t := range ts {
+		if _, ok := m[t.Src]; ok {
+			m[t.Src] = append(m[t.Src], t)
+		} else {
+			m[t.Src] = []*Transition{t}
+		}
+	}
+	return m
 }
 
 // A function to generate the string of header
@@ -145,5 +164,17 @@ func (g *GoSource) testGen(stmname string) {
 	g.writeln("})")
 	g.writeln("env.Set(1)")
 	g.writeln("env.Go()")
+	g.writeln("}")
+}
+
+// A function to generate an example of main
+func (g *GoSource) testMain(stmname string) {
+	g.writeln("package main\n")
+	g.writeln("import (\n\"time\"\n\"" + g.fullpkgname + "\"\n)\n")
+	g.writeln("func main() {")
+	g.writeln("for {")
+	g.writeln(g.pkgname + "." + stmname + "Task()")
+	g.writeln("time.sleep(time.Millisecond * 10)")
+	g.writeln("}")
 	g.writeln("}")
 }

@@ -1,17 +1,36 @@
 package stm2go
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
 
+func TestMakeTransitionMap(t *testing.T) {
+	ss := []*State{
+		&State{"A"},
+		&State{"B"},
+	}
+	ts := []*Transition{
+		&Transition{
+			Src:   ss[0],
+			Dest:  ss[1],
+			Event: &Event{"EventA"},
+		},
+	}
+	m := makeTransitionMap(ts)
+	fmt.Println(ss)
+	fmt.Println(ts)
+	fmt.Println(m)
+}
+
 func TestGenHeader(t *testing.T) {
-	gs := NewGoSource(os.Stdout, "test")
+	gs := NewGoSource(os.Stdout, "com.github/example", "test")
 	gs.baseHeader()
 }
 
 func TestGenStateDefinition(t *testing.T) {
-	gs := NewGoSource(os.Stdout, "test")
+	gs := NewGoSource(os.Stdout, "com.github/example", "test")
 	states := []*State{
 		&State{"A"},
 		&State{"B"},
@@ -20,7 +39,7 @@ func TestGenStateDefinition(t *testing.T) {
 }
 
 func TestGenInitState(t *testing.T) {
-	gs := NewGoSource(os.Stdout, "test")
+	gs := NewGoSource(os.Stdout, "com.github/example", "test")
 	states := []*State{
 		&State{"A"},
 		&State{"B"},
@@ -29,7 +48,7 @@ func TestGenInitState(t *testing.T) {
 }
 
 func TestGenTrans(t *testing.T) {
-	gs := NewGoSource(os.Stdout, "test")
+	gs := NewGoSource(os.Stdout, "com.github/example", "test")
 	states := []*State{
 		&State{"A"},
 		&State{"B"},
@@ -47,7 +66,7 @@ func TestGenTrans(t *testing.T) {
 }
 
 func TestGenSTM(t *testing.T) {
-	gs := NewGoSource(os.Stdout, "test")
+	gs := NewGoSource(os.Stdout, "com.github/example", "test")
 	states := []*State{
 		&State{"A"},
 		&State{"B"},
@@ -68,12 +87,12 @@ func TestGenSTM(t *testing.T) {
 }
 
 func TestGenCommon(t *testing.T) {
-	gs := NewGoSource(os.Stdout, "test")
+	gs := NewGoSource(os.Stdout, "com.github/example", "test")
 	gs.common()
 }
 
 func TestGenFunc(t *testing.T) {
-	gs := NewGoSource(os.Stdout, "test")
+	gs := NewGoSource(os.Stdout, "com.github/example", "test")
 	states := []*State{
 		&State{"A"},
 		&State{"B"},
@@ -91,6 +110,11 @@ func TestGenFunc(t *testing.T) {
 }
 
 func TestGenTest(t *testing.T) {
-	gs := NewGoSource(os.Stdout, "test")
+	gs := NewGoSource(os.Stdout, "com.github/example", "test")
 	gs.testGen("stm1")
+}
+
+func TestGenMain(t *testing.T) {
+	gs := NewGoSource(os.Stdout, "com.github/example", "test")
+	gs.testMain("test")
 }
