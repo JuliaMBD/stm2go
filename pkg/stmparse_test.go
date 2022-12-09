@@ -115,9 +115,10 @@ func TestSTMParse(t *testing.T) {
 
 `)
 
-	result := Parse(data)
+	result, _ := Parse(data)
 	for k, v := range result {
 		fmt.Println("key = ", k)
+		fmt.Println("parent = ", v.Parent)
 
 		for _, s := range v.States {
 			fmt.Println("v.States", s)
@@ -245,7 +246,7 @@ func TestSTMParse2(t *testing.T) {
 </mxGraphModel>
 `)
 
-	result := Parse(data)
+	result, _ := Parse(data)
 	for _, v := range result {
 		for _, s := range v.States {
 			fmt.Println("v.States", s)

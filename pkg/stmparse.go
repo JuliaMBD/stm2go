@@ -39,7 +39,7 @@ type Transition struct {
 	Event *Event
 }
 
-func Parse(data []byte) map[string]*StateMachine {
+func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 	logger = log.New(os.Stdout, "[Parse] ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 	// logger.SetOutput(io.Discard)
 	states := make(map[string]*State)
@@ -116,7 +116,7 @@ func Parse(data []byte) map[string]*StateMachine {
 	for k, _ := range smevents {
 		k.s.Events = append(k.s.Events, k.e)
 	}
-	return sm
+	return sm, states
 }
 
 func (c *MxElement) getNode() string {
