@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+const srcdir string = "stm"
+
 func generate(domain string, pkgname string, xml []byte) {
 	// default model names (to be modified)
 	names := make(map[string]string)
@@ -18,12 +20,12 @@ func generate(domain string, pkgname string, xml []byte) {
 	stmap, sttree, root := NewGoSTMMap(pkg, names, stms, states)
 
 	// generate directory
-	if err := os.MkdirAll(pkgname+"/src", 0777); err != nil {
+	if err := os.MkdirAll(pkgname+"/"+srcdir, 0777); err != nil {
 		panic(err)
 	}
 
 	// generate common file
-	if f, err := os.OpenFile(pkgname+"/src/common.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
+	if f, err := os.OpenFile(pkgname+"/"+srcdir+"/common.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
 		w := NewWriter(f)
 		pkg.common(w)
 		f.Close()
@@ -33,7 +35,7 @@ func generate(domain string, pkgname string, xml []byte) {
 
 	// generate base and impl files
 	for _, s := range stmap {
-		if f, err := os.OpenFile(pkgname+"/src/"+s.name+"_base.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
+		if f, err := os.OpenFile(pkgname+"/"+srcdir+"/"+s.name+"_base.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
 			w := NewWriter(f)
 			s.baseHeader(w)
 			s.baseStateDefinition(w)
@@ -43,7 +45,7 @@ func generate(domain string, pkgname string, xml []byte) {
 		} else {
 			panic(err)
 		}
-		if f, err := os.OpenFile(pkgname+"/src/"+s.name+"_impl.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
+		if f, err := os.OpenFile(pkgname+"/"+srcdir+"/"+s.name+"_impl.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
 			w := NewWriter(f)
 			s.implHeader(w)
 			s.implFunctions(w, sttree)
@@ -56,7 +58,7 @@ func generate(domain string, pkgname string, xml []byte) {
 	// generate test and main files
 	if s, ok := sttree[root]; ok && len(s) == 1 {
 		entryname := s[0].name
-		if f, err := os.OpenFile(pkgname+"/src/"+pkgname+"_test.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
+		if f, err := os.OpenFile(pkgname+"/"+srcdir+"/"+pkgname+"_test.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
 			w := NewWriter(f)
 			pkg.testGen(w, entryname)
 			f.Close()
