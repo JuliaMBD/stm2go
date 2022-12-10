@@ -6,8 +6,6 @@ import (
 	"strconv"
 )
 
-const srcdir string = "stm"
-
 func Generate(domain string, pkgname string, xml []byte) {
 	// default model names (to be modified)
 	names := make(map[string]string)
