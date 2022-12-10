@@ -1,6 +1,7 @@
 package stm2go
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 )
@@ -9,12 +10,12 @@ func generate(domain string, pkgname string, xml []byte) {
 	// default model names (to be modified)
 	names := make(map[string]string)
 	for i := 1; i < 100; i++ {
-		names[strconv.Itoa(i)] = "Model" + strconv.Itoa(i)
+		names[strconv.Itoa(i)] = "stm" + strconv.Itoa(i)
 	}
 
 	stms, states := Parse(xml)
 	pkg := NewGoPkgSource(domain, pkgname)
-	stmap, root := NewGoSTMMap(pkg, names, stms, states)
+	stmap, sttree, root := NewGoSTMMap(pkg, names, stms, states)
 
 	// generate directory
 	if err := os.MkdirAll(pkgname+"/src", 0777); err != nil {
@@ -45,7 +46,7 @@ func generate(domain string, pkgname string, xml []byte) {
 		if f, err := os.OpenFile(pkgname+"/src/"+s.name+"_impl.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
 			w := NewWriter(f)
 			s.implHeader(w)
-			s.implFunctions(w)
+			s.implFunctions(w, sttree)
 			f.Close()
 		} else {
 			panic(err)
@@ -53,20 +54,24 @@ func generate(domain string, pkgname string, xml []byte) {
 	}
 
 	// generate test and main files
-	entryname := stmap[root].name
-	if f, err := os.OpenFile(pkgname+"/src/"+pkgname+"_test.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
-		w := NewWriter(f)
-		pkg.testGen(w, entryname)
-		f.Close()
-	} else {
-		panic(err)
-	}
+	if s, ok := sttree[root]; ok && len(s) == 1 {
+		entryname := s[0].name
+		if f, err := os.OpenFile(pkgname+"/src/"+pkgname+"_test.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
+			w := NewWriter(f)
+			pkg.testGen(w, entryname)
+			f.Close()
+		} else {
+			panic(err)
+		}
 
-	if f, err := os.OpenFile(pkgname+"/main.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
-		w := NewWriter(f)
-		pkg.testMain(w, entryname)
-		f.Close()
+		if f, err := os.OpenFile(pkgname+"/main.go", os.O_RDWR|os.O_CREATE, 0664); err == nil {
+			w := NewWriter(f)
+			pkg.testMain(w, entryname)
+			f.Close()
+		} else {
+			panic(err)
+		}
 	} else {
-		panic(err)
+		fmt.Errorf("There are two or more root STMs.")
 	}
 }

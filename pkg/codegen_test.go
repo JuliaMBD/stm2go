@@ -113,7 +113,7 @@ func TestGenFunc(t *testing.T) {
 		},
 	}
 	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg)
-	stm.implFunctions(w)
+	stm.implFunctions(w, make(map[*State][]*GoSTMSource))
 }
 
 func TestGenTest(t *testing.T) {
@@ -245,9 +245,10 @@ func TestGenAllGo(t *testing.T) {
 	}
 	pkg := NewGoPkgSource("com.github/JuliaMBD", "test")
 	names := map[string]string{"1": "Model1", "3": "Model2"}
-	stmap, root := NewGoSTMMap(pkg, names, result, s)
+	stmap, sttree, root := NewGoSTMMap(pkg, names, result, s)
 	fmt.Println(pkg)
 	fmt.Println(stmap)
+	fmt.Println(sttree)
 	fmt.Printf("root %p\n", root)
 }
 
@@ -365,20 +366,20 @@ func TestGenGoSource1(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("com.github/JuliaMBD", "test")
 	names := map[string]string{"1": "Model1", "3": "Model2"}
-	stmap, root := NewGoSTMMap(pkg, names, stms, states)
+	stmap, sttree, root := NewGoSTMMap(pkg, names, stms, states)
 
 	pkg.common(w)
 
-	s := stmap[root]
+	s := stmap[0]
 	s.baseHeader(w)
 	s.baseStateDefinition(w)
 	s.baseStateInitialize(w)
 	s.baseTransDefinition(w)
 
 	s.implHeader(w)
-	s.implFunctions(w)
+	s.implFunctions(w, sttree)
 
-	entryname := stmap[root].name
+	entryname := sttree[root][0].name
 	pkg.testGen(w, entryname)
 	pkg.testMain(w, entryname)
 }

@@ -48,18 +48,28 @@ func NewGoSTMSource(name string,
 
 // A function to make map between a parent state and a state machine
 func NewGoSTMMap(pkg *GoPkgSource, names map[string]string,
-	stms map[string]*StateMachine, states map[string]*State) (map[*State]*GoSTMSource, *State) {
-	stmap := make(map[*State]*GoSTMSource)
+	stms map[string]*StateMachine, states map[string]*State) ([]*GoSTMSource, map[*State][]*GoSTMSource, *State) {
+	stmap := make([]*GoSTMSource, 0)
+	sttree := make(map[*State][]*GoSTMSource)
 	root := &State{Name: "root"}
 	for k, s := range stms {
 		st := NewGoSTMSource(names[k], s.States, s.Transitions, s.Initial, pkg)
+		stmap = append(stmap, st)
 		if p, ok := states[s.Parent]; ok {
-			stmap[p] = st
+			if _, ok := sttree[p]; ok {
+				sttree[p] = append(sttree[p], st)
+			} else {
+				sttree[p] = []*GoSTMSource{st}
+			}
 		} else {
-			stmap[root] = st
+			if _, ok := sttree[root]; ok {
+				sttree[root] = append(sttree[root], st)
+			} else {
+				sttree[root] = []*GoSTMSource{st}
+			}
 		}
 	}
-	return stmap, root
+	return stmap, sttree, root
 }
 
 type Writer struct {
@@ -167,18 +177,28 @@ func (g *GoSTMSource) implHeader(w *Writer) {
 }
 
 // A function to generate template functions
-func (g *GoSTMSource) implFunctions(w *Writer) {
+func (g *GoSTMSource) implFunctions(w *Writer, sttree map[*State][]*GoSTMSource) {
 	ss := g.ss
 	ts := g.ts
 	for _, s := range ss {
 		w.writeln("// functions for State " + s.Name + "\n")
 		w.writeln("func " + s.Name + "Entry() {")
+		if stms, ok := sttree[s]; ok {
+			for _, stm := range stms {
+				w.writeln(stm.name + "Initialize() // Call the initialize for " + stm.name)
+			}
+		}
 		w.writeln("if debug {")
 		w.writeln("logger.Println(\"Entering State " + s.Name + "\")")
 		w.writeln("}")
 		w.writeln("// Please write an enter process for State " + s.Name)
 		w.writeln("}\n")
 		w.writeln("func " + s.Name + "Do() {")
+		if stms, ok := sttree[s]; ok {
+			for _, stm := range stms {
+				w.writeln(stm.name + "Task() // Call the task for " + stm.name)
+			}
+		}
 		w.writeln("// Please write a do process for State " + s.Name)
 		w.writeln("}\n")
 		w.writeln("func " + s.Name + "Exit() {")
@@ -241,7 +261,7 @@ func (g *GoPkgSource) testGen(w *Writer, stmname string) {
 // A function to generate an example of main
 func (g *GoPkgSource) testMain(w *Writer, stmname string) {
 	w.writeln("package main\n")
-	w.writeln("import (\n\"time\"\n\"" + g.fullpkgname + "\"\n)\n")
+	w.writeln("import (\"time\"\n\"" + g.fullpkgname + "\"\n)\n")
 	w.writeln("func main() {")
 	w.writeln("for {")
 	w.writeln(g.pkgname + "." + stmname + "Task()")
