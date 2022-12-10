@@ -1,3 +1,3 @@
-module com.github/JuliaMBD/stm2go
+module github.com/JuliaMBD/stm2go
 
 go 1.18
