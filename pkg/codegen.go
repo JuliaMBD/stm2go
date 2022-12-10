@@ -119,6 +119,7 @@ func (g *GoSTMSource) baseStateDefinition(w *Writer) {
 func (g *GoSTMSource) baseStateInitialize(w *Writer) {
 	stm := g.name
 	i := g.initial
+	w.writeln("var " + stm + "CurrentState " + stm + "State\n")
 	w.writeln("func init() {")
 	w.writeln(stm + "Initialize()")
 	w.writeln("}\n")
@@ -244,7 +245,7 @@ func (g *GoPkgSource) testMain(w *Writer, stmname string) {
 	w.writeln("func main() {")
 	w.writeln("for {")
 	w.writeln(g.pkgname + "." + stmname + "Task()")
-	w.writeln("time.sleep(time.Millisecond * 10)")
+	w.writeln("time.Sleep(time.Millisecond * 10)")
 	w.writeln("}")
 	w.writeln("}")
 }
