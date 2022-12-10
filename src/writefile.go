@@ -8,7 +8,7 @@ import (
 
 const srcdir string = "stm"
 
-func generate(domain string, pkgname string, xml []byte) {
+func Generate(domain string, pkgname string, xml []byte) {
 	// default model names (to be modified)
 	names := make(map[string]string)
 	for i := 1; i < 100; i++ {

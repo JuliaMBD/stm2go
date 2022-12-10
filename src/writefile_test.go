@@ -114,6 +114,6 @@ func TestWriteFile(t *testing.T) {
 
 `)
 
-	generate("com.github/JuliaMBD", "test", data)
+	Generate("com.github/JuliaMBD", "test", data)
 
 }
