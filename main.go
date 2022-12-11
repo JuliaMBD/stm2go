@@ -61,4 +61,7 @@ func cmdgen(args []string) {
 	}
 
 	stm2go.Generate(domain, pkgname, xml)
+	fmt.Println("Done")
+
+	fmt.Println("Please execute 'cd " + pkgname + "; go mod init " + *fullpkgname + "; go mod tidy'")
 }
