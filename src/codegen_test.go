@@ -26,14 +26,14 @@ func TestMakeTransitionMap(t *testing.T) {
 
 func TestGenHeader(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	pkg := NewGoPkgSource("com.github/example", "test")
+	pkg := NewGoPkgSource("github.com/example", "test")
 	stm := NewGoSTMSource("stm1test", nil, nil, nil, pkg)
 	stm.baseHeader(w)
 }
 
 func TestGenStateDefinition(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	pkg := NewGoPkgSource("com.github/example", "test")
+	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
 		&State{"A"},
 		&State{"B"},
@@ -44,7 +44,7 @@ func TestGenStateDefinition(t *testing.T) {
 
 func TestGenInitState(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	pkg := NewGoPkgSource("com.github/example", "test")
+	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
 		&State{"A"},
 		&State{"B"},
@@ -55,7 +55,7 @@ func TestGenInitState(t *testing.T) {
 
 func TestGenTrans(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	pkg := NewGoPkgSource("com.github/example", "test")
+	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
 		&State{"A"},
 		&State{"B"},
@@ -73,7 +73,7 @@ func TestGenTrans(t *testing.T) {
 
 func TestGenSTM(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	pkg := NewGoPkgSource("com.github/example", "test")
+	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
 		&State{"A"},
 		&State{"B"},
@@ -94,13 +94,13 @@ func TestGenSTM(t *testing.T) {
 
 func TestGenCommon(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	pkg := NewGoPkgSource("com.github/example", "test")
+	pkg := NewGoPkgSource("github.com/example", "test")
 	pkg.common(w)
 }
 
 func TestGenFunc(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	pkg := NewGoPkgSource("com.github/example", "test")
+	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
 		&State{"A"},
 		&State{"B"},
@@ -118,13 +118,13 @@ func TestGenFunc(t *testing.T) {
 
 func TestGenTest(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	gs := NewGoPkgSource("com.github/example", "test")
+	gs := NewGoPkgSource("github.com/example", "test")
 	gs.testGen(w, "stm1")
 }
 
 func TestGenMain(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	gs := NewGoPkgSource("com.github/example", "test")
+	gs := NewGoPkgSource("github.com/example", "test")
 	gs.testMain(w, "test")
 }
 
@@ -243,7 +243,7 @@ func TestGenAllGo(t *testing.T) {
 	for k, _ := range result {
 		fmt.Println(k)
 	}
-	pkg := NewGoPkgSource("com.github/JuliaMBD", "test")
+	pkg := NewGoPkgSource("github.com/JuliaMBD", "test")
 	names := map[string]string{"1": "Model1", "3": "Model2"}
 	stmap, sttree, root := NewGoSTMMap(pkg, names, result, s)
 	fmt.Println(pkg)
@@ -364,7 +364,7 @@ func TestGenGoSource1(t *testing.T) {
 
 	stms, states := Parse(data)
 	w := NewWriter(os.Stdout)
-	pkg := NewGoPkgSource("com.github/JuliaMBD", "test")
+	pkg := NewGoPkgSource("github.com/JuliaMBD", "test")
 	names := map[string]string{"1": "Model1", "3": "Model2"}
 	stmap, sttree, root := NewGoSTMMap(pkg, names, stms, states)
 

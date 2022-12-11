@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	stm2go "com.github/JuliaMBD/stm2go/src"
+	stm2go "github.com/JuliaMBD/stm2go/src"
 )
 
 func usage() {
@@ -39,7 +39,7 @@ func main() {
 
 func cmdgen(args []string) {
 	infile := flag.String("f", "", "State machine file (XML file of draw.io/diagrams.net")
-	fullpkgname := flag.String("p", "com.github/example/package", "Full package name. Default is \"com.github/example/package\"")
+	fullpkgname := flag.String("p", "github.com/example/package", "Full package name. Default is \"github.com/example/package\"")
 	flag.CommandLine.Parse(args)
 
 	pkgname := filepath.Base(*fullpkgname)
