@@ -39,7 +39,7 @@ func main() {
 
 func cmdgen(args []string) {
 	infile := flag.String("f", "", "State machine file (XML file of draw.io/diagrams.net")
-	fullpkgname := flag.String("p", "github.com/example/package", "Full package name. Default is \"github.com/example/package\"")
+	fullpkgname := flag.String("p", "github.com/example/mypackage", "Full package name. Default is \"github.com/example/mypackage\"")
 	flag.CommandLine.Parse(args)
 
 	pkgname := filepath.Base(*fullpkgname)
