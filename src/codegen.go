@@ -17,6 +17,7 @@ type GoSTMSource struct {
 	ts      map[*State][]*Transition
 	initial *State
 	pkg     *GoPkgSource
+	root    bool
 }
 
 // A function to create GoSource
@@ -37,14 +38,16 @@ func NewGoPkgSource(domain string, pkgname string) *GoPkgSource {
 //   ts: Slice of Transitions
 //   initial: Initial State
 //   pkg: GoSource for Pkg
+//   root: Indicator whether the stm is root or not
 func NewGoSTMSource(name string,
-	ss []*State, ts []*Transition, initial *State, pkg *GoPkgSource) *GoSTMSource {
+	ss []*State, ts []*Transition, initial *State, pkg *GoPkgSource, root bool) *GoSTMSource {
 	return &GoSTMSource{
 		name:    name,
 		ss:      ss,
 		ts:      makeTransitionMap(ts),
 		initial: initial,
 		pkg:     pkg,
+		root:    root,
 	}
 }
 
@@ -55,7 +58,7 @@ func NewGoSTMMap(pkg *GoPkgSource, names map[string]string,
 	sttree := make(map[*State][]*GoSTMSource)
 	root := &State{Name: "root"}
 	for k, s := range stms {
-		st := NewGoSTMSource(names[k], s.States, s.Transitions, s.Initial, pkg)
+		st := NewGoSTMSource(names[k], s.States, s.Transitions, s.Initial, pkg, false)
 		stmap = append(stmap, st)
 		if p, ok := states[s.Parent]; ok {
 			if _, ok := sttree[p]; ok {
@@ -70,6 +73,9 @@ func NewGoSTMMap(pkg *GoPkgSource, names map[string]string,
 				sttree[root] = []*GoSTMSource{st}
 			}
 		}
+	}
+	for i := range sttree[root] {
+		sttree[root][i].root = true
 	}
 	return stmap, sttree, root
 }
@@ -145,6 +151,11 @@ func (g *GoSTMSource) baseTransDefinition(w *Writer) {
 	stm := g.name
 	ss := g.ss
 	ts := g.ts
+	if g.root {
+		w.writeln("func Entry" + stm + "Task() {")
+		w.writeln(stm + "Task()")
+		w.writeln("}\n")
+	}
 	w.writeln("func " + stm + "Task() {")
 	w.writeln("switch " + stm + "CurrentState {")
 	for _, s := range ss {
@@ -267,7 +278,7 @@ func (g *GoPkgSource) testMain(w *Writer, stmname string) {
 	w.writeln("import (\"time\"\n" + g.pkgname + " \"" + g.fullpkgname + "/" + srcdir + "\"\n)\n")
 	w.writeln("func main() {")
 	w.writeln("for {")
-	w.writeln(g.pkgname + "." + stmname + "Task()")
+	w.writeln(g.pkgname + ".Entry" + stmname + "Task()")
 	w.writeln("time.Sleep(time.Millisecond * 10)")
 	w.writeln("}")
 	w.writeln("}")
