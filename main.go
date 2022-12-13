@@ -192,9 +192,9 @@ func cmdgen(args []string) {
 			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
 				w := stm2go.NewWriter(f)
 				s.BaseHeader(w)
-				s.BaseStateDefinition(w)
-				s.BaseStateInitialize(w)
-				s.BaseTransDefinition(w)
+				s.BaseStateDefinition(w, names)
+				s.BaseStateInitialize(w, names)
+				s.BaseTransDefinition(w, names)
 				f.Close()
 			} else {
 				fmt.Println("Fail to create " + fn)
@@ -210,7 +210,7 @@ func cmdgen(args []string) {
 			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
 				w := stm2go.NewWriter(f)
 				s.ImplHeader(w)
-				s.ImplFunctions(w, sttree)
+				s.ImplFunctions(w, sttree, names)
 				f.Close()
 			} else {
 				fmt.Println("Fail to create " + fn)
