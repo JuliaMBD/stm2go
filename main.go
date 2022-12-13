@@ -229,5 +229,6 @@ func cmdgen(args []string) {
 
 	fmt.Println("Code generation done.")
 
-	fmt.Println("Please execute 'cd " + pkg.Pkgname + "; go mod init " + pkg.Fullpkgname + "; go mod tidy'")
+	fmt.Println("Please execute:")
+	fmt.Println("    go mod init " + pkg.Fullpkgname + "; go mod tidy")
 }
