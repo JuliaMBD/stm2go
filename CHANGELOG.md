@@ -1,3 +1,8 @@
+# stm2go 0.2.1
+
+- README
+- change the file names such as stm2go.json
+
 # stm2go 0.2.0
 
 - Change the style of main command

@@ -17,9 +17,9 @@ var (
 	names  map[string]string
 )
 
-const config_file string = "package.json"
+const config_file string = "stm2go.json"
 const default_packagename string = "github.com/example/mypackage"
-const default_xmlname string = "model.xml"
+const default_xmlname string = "model.drawio"
 
 func init() {
 	names = make(map[string]string)
