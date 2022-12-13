@@ -244,8 +244,7 @@ func TestGenAllGo(t *testing.T) {
 		fmt.Println(k)
 	}
 	pkg := NewGoPkgSource("github.com/JuliaMBD", "test")
-	names := map[string]string{"1": "Model1", "3": "Model2"}
-	stmap, sttree, root := NewGoSTMMap(pkg, names, result, s)
+	stmap, sttree, root := NewGoSTMMap(pkg, result, s)
 	fmt.Println(pkg)
 	fmt.Println(stmap)
 	fmt.Println(sttree)
@@ -365,8 +364,7 @@ func TestGenGoSource1(t *testing.T) {
 	stms, states := Parse(data)
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/JuliaMBD", "test")
-	names := map[string]string{"1": "Model1", "3": "Model2"}
-	stmap, sttree, root := NewGoSTMMap(pkg, names, stms, states)
+	stmap, sttree, root := NewGoSTMMap(pkg, stms, states)
 
 	pkg.Common(w)
 
@@ -379,7 +377,7 @@ func TestGenGoSource1(t *testing.T) {
 	s.ImplHeader(w)
 	s.ImplFunctions(w, sttree)
 
-	entryname := sttree[root][0].Name
+	entryname := sttree[root][0].Id
 	pkg.TestGen(w, entryname)
 	pkg.GenMain(w, entryname)
 }

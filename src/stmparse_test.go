@@ -267,3 +267,114 @@ func TestSTMParse2(t *testing.T) {
 		}
 	}
 }
+
+func TestSTMParse3(t *testing.T) {
+	data := []byte(`
+  <mxGraphModel dx="1746" dy="1046" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="EBAIrEwSQ_sO8G7dM4pI-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="EBAIrEwSQ_sO8G7dM4pI-9" target="EBAIrEwSQ_sO8G7dM4pI-10" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <object label="" type="initialstate" id="EBAIrEwSQ_sO8G7dM4pI-9">
+      <mxCell style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;glass=0;sketch=0;fillColor=#000000;" parent="1" vertex="1">
+        <mxGeometry x="-600" y="100" width="30" height="30" as="geometry" />
+      </mxCell>
+    </object>
+    <mxCell id="EBAIrEwSQ_sO8G7dM4pI-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="EBAIrEwSQ_sO8G7dM4pI-10" target="EBAIrEwSQ_sO8G7dM4pI-12" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="EBAIrEwSQ_sO8G7dM4pI-18" value="TurnOn" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="EBAIrEwSQ_sO8G7dM4pI-15" vertex="1" connectable="0">
+      <mxGeometry x="0.3111" y="1" relative="1" as="geometry">
+        <mxPoint x="-19" y="-14" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <object label="LedOff" type="state" id="EBAIrEwSQ_sO8G7dM4pI-10">
+      <mxCell style="swimlane;rounded=1;whiteSpace=wrap;html=1;glass=0;sketch=0;" parent="1" vertex="1">
+        <mxGeometry x="-510" y="75" width="130" height="80" as="geometry" />
+      </mxCell>
+    </object>
+    <mxCell id="EBAIrEwSQ_sO8G7dM4pI-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" parent="1" source="EBAIrEwSQ_sO8G7dM4pI-12" target="EBAIrEwSQ_sO8G7dM4pI-10" edge="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="-280" y="260" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="EBAIrEwSQ_sO8G7dM4pI-21" value="TurnOff" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="EBAIrEwSQ_sO8G7dM4pI-16" vertex="1" connectable="0">
+      <mxGeometry x="-0.0875" y="1" relative="1" as="geometry">
+        <mxPoint x="-9" y="14" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <object label="LedOn" type="state" id="EBAIrEwSQ_sO8G7dM4pI-12">
+      <mxCell style="swimlane;rounded=1;whiteSpace=wrap;html=1;glass=0;sketch=0;startSize=23;container=1;" parent="1" vertex="1">
+        <mxGeometry x="-250" y="-170" width="380" height="250" as="geometry" />
+      </mxCell>
+    </object>
+    <mxCell id="6" style="edgeStyle=none;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" parent="EBAIrEwSQ_sO8G7dM4pI-12" source="2" target="3" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="12" value="Off" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="6" vertex="1" connectable="0">
+      <mxGeometry x="-0.0511" y="-1" relative="1" as="geometry">
+        <mxPoint x="1" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <object label="LedOn6" type="state" id="2">
+      <mxCell style="swimlane;rounded=1;whiteSpace=wrap;html=1;glass=0;sketch=0;startSize=23;" parent="EBAIrEwSQ_sO8G7dM4pI-12" vertex="1">
+        <mxGeometry x="110" y="85" width="70" height="50" as="geometry" />
+      </mxCell>
+    </object>
+    <mxCell id="7" style="edgeStyle=none;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="EBAIrEwSQ_sO8G7dM4pI-12" source="3" target="2" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="13" value="On" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="7" vertex="1" connectable="0">
+      <mxGeometry x="0.1875" relative="1" as="geometry">
+        <mxPoint x="1" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <object label="LedOff7" type="state" id="3">
+      <mxCell style="swimlane;rounded=1;whiteSpace=wrap;html=1;glass=0;sketch=0;startSize=20;" parent="EBAIrEwSQ_sO8G7dM4pI-12" vertex="1">
+        <mxGeometry x="280" y="120" width="70" height="50" as="geometry" />
+      </mxCell>
+    </object>
+    <mxCell id="11" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="EBAIrEwSQ_sO8G7dM4pI-12" source="8" target="2" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <object label="" type="initialstate" id="8">
+      <mxCell style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;glass=0;sketch=0;fillColor=#000000;" parent="EBAIrEwSQ_sO8G7dM4pI-12" vertex="1">
+        <mxGeometry x="30" y="105" width="30" height="30" as="geometry" />
+      </mxCell>
+    </object>
+    <mxCell id="EBAIrEwSQ_sO8G7dM4pI-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;dashed=1;" parent="1" source="EBAIrEwSQ_sO8G7dM4pI-19" target="EBAIrEwSQ_sO8G7dM4pI-10" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <object label="This is a note." type="note" id="EBAIrEwSQ_sO8G7dM4pI-19">
+      <mxCell style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;glass=0;sketch=0;fillColor=#ffffff;" parent="1" vertex="1">
+        <mxGeometry x="-400" y="-80" width="80" height="100" as="geometry" />
+      </mxCell>
+    </object>
+  </root>
+</mxGraphModel>
+`)
+
+	result, _ := Parse(data)
+	for _, v := range result {
+		fmt.Println(v.Parent)
+		for _, s := range v.States {
+			fmt.Println("v.States", s)
+		}
+
+		for _, t := range v.Transitions {
+			fmt.Println("v.Transitions", *t)
+
+			// for _, item := range t {
+			// 	fmt.Println("v.Transitions", *item)
+			// }
+		}
+
+		fmt.Println("v.Initial", v.Initial)
+
+		for _, e := range v.Events {
+			fmt.Println("v.Events", e)
+		}
+	}
+}

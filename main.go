@@ -18,16 +18,9 @@ var (
 )
 
 const config_file string = "stm2go.json"
+const model_file string = "models.json"
 const default_packagename string = "github.com/example/mypackage"
 const default_xmlname string = "model.drawio"
-
-func init() {
-	names = make(map[string]string)
-	// default model names (to be modified)
-	for i := 1; i < 100; i++ {
-		names[strconv.Itoa(i)] = "stm" + strconv.Itoa(i)
-	}
-}
 
 // A function to check whether a file exists or not
 func fileExists(filename string) bool {
@@ -131,12 +124,40 @@ func cmdgen(args []string) {
 	}
 
 	stms, states := stm2go.Parse(xml)
-	stmap, sttree, root := stm2go.NewGoSTMMap(pkg, names, stms, states)
+	stmap, sttree, root := stm2go.NewGoSTMMap(pkg, stms, states)
+
+	if !fileExists(model_file) {
+		fmt.Println("Create model file: " + model_file)
+		tmp := make(map[string]string)
+		b, err := json.Marshal(tmp)
+		if err != nil {
+			fmt.Println("JSON marshal error: ", err)
+			os.Exit(1)
+		}
+		os.WriteFile(model_file, b, 0644)
+	}
+	if raw, err := os.ReadFile(model_file); err == nil {
+		json.Unmarshal(raw, &names)
+	} else {
+		fmt.Println("Fail to read " + model_file)
+		os.Exit(1)
+	}
+	for _, s := range stmap {
+		if _, ok := names[s.Id]; !ok {
+			names[s.Id] = "stm" + strconv.Itoa(len(names))
+		}
+	}
+	b, err := json.MarshalIndent(names, "", "  ")
+	if err != nil {
+		fmt.Println("JSON marshal error: ", err)
+		os.Exit(1)
+	}
+	os.WriteFile(model_file, b, 0644)
 
 	var fn string
 	var entryname string
 	if s, ok := sttree[root]; ok && len(s) == 1 {
-		entryname = s[0].Name
+		entryname = names[s[0].Id]
 	} else {
 		fmt.Println("Error: There are two entry points")
 		os.Exit(1)
@@ -166,7 +187,7 @@ func cmdgen(args []string) {
 	// generate base and impl files
 	for _, s := range stmap {
 		// base
-		fn = srcdir + "/" + s.Name + "_base.go"
+		fn = srcdir + "/" + names[s.Id] + "_base.go"
 		if force == true || !fileExists(fn) {
 			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
 				w := stm2go.NewWriter(f)
@@ -184,7 +205,7 @@ func cmdgen(args []string) {
 		}
 
 		// impl
-		fn = srcdir + "/" + s.Name + "_impl.go"
+		fn = srcdir + "/" + names[s.Id] + "_impl.go"
 		if force == true || !fileExists(fn) {
 			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
 				w := stm2go.NewWriter(f)

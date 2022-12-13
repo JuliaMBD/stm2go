@@ -13,7 +13,7 @@ type GoPkgSource struct {
 }
 
 type GoSTMSource struct {
-	Name    string
+	Id      string
 	ss      []*State
 	ts      map[*State][]*Transition
 	initial *State
@@ -44,7 +44,7 @@ func NewGoPkgSource(domain string, pkgname string) *GoPkgSource {
 func NewGoSTMSource(name string,
 	ss []*State, ts []*Transition, initial *State, pkg *GoPkgSource, root bool) *GoSTMSource {
 	return &GoSTMSource{
-		Name:    name,
+		Id:      name,
 		ss:      ss,
 		ts:      makeTransitionMap(ts),
 		initial: initial,
@@ -54,13 +54,12 @@ func NewGoSTMSource(name string,
 }
 
 // A function to make map between a parent state and a state machine
-func NewGoSTMMap(pkg *GoPkgSource, names map[string]string,
-	stms map[string]*StateMachine, states map[string]*State) ([]*GoSTMSource, map[*State][]*GoSTMSource, *State) {
+func NewGoSTMMap(pkg *GoPkgSource, stms map[string]*StateMachine, states map[string]*State) ([]*GoSTMSource, map[*State][]*GoSTMSource, *State) {
 	stmap := make([]*GoSTMSource, 0)
 	sttree := make(map[*State][]*GoSTMSource)
 	root := &State{Name: "root"}
 	for k, s := range stms {
-		st := NewGoSTMSource(names[k], s.States, s.Transitions, s.Initial, pkg, false)
+		st := NewGoSTMSource(k, s.States, s.Transitions, s.Initial, pkg, false)
 		stmap = append(stmap, st)
 		if p, ok := states[s.Parent]; ok {
 			if _, ok := sttree[p]; ok {
@@ -120,7 +119,7 @@ func (g *GoSTMSource) BaseHeader(w *Writer) {
 
 // A function to generate Enum for states
 func (g *GoSTMSource) BaseStateDefinition(w *Writer) {
-	stm := g.Name
+	stm := g.Id
 	ss := g.ss
 	w.writeln("type " + stm + "State uint8")
 	w.writeln("const (")
@@ -137,7 +136,7 @@ func (g *GoSTMSource) BaseStateDefinition(w *Writer) {
 
 // A function to generate init function
 func (g *GoSTMSource) BaseStateInitialize(w *Writer) {
-	stm := g.Name
+	stm := g.Id
 	i := g.initial
 	w.writeln("var " + stm + "CurrentState " + stm + "State\n")
 	w.writeln("func init() {")
@@ -150,7 +149,7 @@ func (g *GoSTMSource) BaseStateInitialize(w *Writer) {
 
 //
 func (g *GoSTMSource) BaseTransDefinition(w *Writer) {
-	stm := g.Name
+	stm := g.Id
 	ss := g.ss
 	ts := g.ts
 	if g.root {
@@ -200,7 +199,7 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource)
 		w.writeln("func " + s.Name + "Entry() {")
 		if stms, ok := sttree[s]; ok {
 			for _, stm := range stms {
-				w.writeln(stm.Name + "Initialize() // Call the initialize for " + stm.Name)
+				w.writeln(stm.Id + "Initialize() // Call the initialize for " + stm.Id)
 			}
 		}
 		w.writeln("if debug {")
@@ -211,7 +210,7 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource)
 		w.writeln("func " + s.Name + "Do() {")
 		if stms, ok := sttree[s]; ok {
 			for _, stm := range stms {
-				w.writeln(stm.Name + "Task() // Call the task for " + stm.Name)
+				w.writeln(stm.Id + "Task() // Call the task for " + stm.Id)
 			}
 		}
 		w.writeln("// Please write a do process for State " + s.Name)
