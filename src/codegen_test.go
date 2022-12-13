@@ -38,8 +38,9 @@ func TestGenStateDefinition(t *testing.T) {
 		&State{"A"},
 		&State{"B"},
 	}
+	names := map[string]string{"stm1test": "stm0"}
 	stm := NewGoSTMSource("stm1test", states, nil, states[0], pkg, false)
-	stm.BaseStateDefinition(w)
+	stm.BaseStateDefinition(w, names)
 }
 
 func TestGenInitState(t *testing.T) {
@@ -49,8 +50,9 @@ func TestGenInitState(t *testing.T) {
 		&State{"A"},
 		&State{"B"},
 	}
+	names := map[string]string{"stm1test": "stm0"}
 	stm := NewGoSTMSource("stm1test", states, nil, states[0], pkg, false)
-	stm.BaseStateInitialize(w)
+	stm.BaseStateInitialize(w, names)
 }
 
 func TestGenTrans(t *testing.T) {
@@ -67,8 +69,9 @@ func TestGenTrans(t *testing.T) {
 			Event: &Event{"EventA"},
 		},
 	}
+	names := map[string]string{"stm1test": "stm0"}
 	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
-	stm.BaseTransDefinition(w)
+	stm.BaseTransDefinition(w, names)
 }
 
 func TestGenSTM(t *testing.T) {
@@ -85,11 +88,12 @@ func TestGenSTM(t *testing.T) {
 			Event: &Event{"EventA"},
 		},
 	}
+	names := map[string]string{"stm1test": "stm0"}
 	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
 	stm.BaseHeader(w)
-	stm.BaseStateDefinition(w)
-	stm.BaseStateInitialize(w)
-	stm.BaseTransDefinition(w)
+	stm.BaseStateDefinition(w, names)
+	stm.BaseStateInitialize(w, names)
+	stm.BaseTransDefinition(w, names)
 }
 
 func TestGenCommon(t *testing.T) {
@@ -112,8 +116,9 @@ func TestGenFunc(t *testing.T) {
 			Event: &Event{"EventA"},
 		},
 	}
+	names := map[string]string{"stm1test": "stm0"}
 	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
-	stm.ImplFunctions(w, make(map[*State][]*GoSTMSource))
+	stm.ImplFunctions(w, make(map[*State][]*GoSTMSource), names)
 }
 
 func TestGenTest(t *testing.T) {
@@ -369,13 +374,15 @@ func TestGenGoSource1(t *testing.T) {
 	pkg.Common(w)
 
 	s := stmap[0]
+	names := map[string]string{"1": "stm0", "3": "stm1"}
+
 	s.BaseHeader(w)
-	s.BaseStateDefinition(w)
-	s.BaseStateInitialize(w)
-	s.BaseTransDefinition(w)
+	s.BaseStateDefinition(w, names)
+	s.BaseStateInitialize(w, names)
+	s.BaseTransDefinition(w, names)
 
 	s.ImplHeader(w)
-	s.ImplFunctions(w, sttree)
+	s.ImplFunctions(w, sttree, names)
 
 	entryname := sttree[root][0].Id
 	pkg.TestGen(w, entryname)

@@ -118,8 +118,8 @@ func (g *GoSTMSource) BaseHeader(w *Writer) {
 }
 
 // A function to generate Enum for states
-func (g *GoSTMSource) BaseStateDefinition(w *Writer) {
-	stm := g.Id
+func (g *GoSTMSource) BaseStateDefinition(w *Writer, names map[string]string) {
+	stm := names[g.Id]
 	ss := g.ss
 	w.writeln("type " + stm + "State uint8")
 	w.writeln("const (")
@@ -135,8 +135,8 @@ func (g *GoSTMSource) BaseStateDefinition(w *Writer) {
 }
 
 // A function to generate init function
-func (g *GoSTMSource) BaseStateInitialize(w *Writer) {
-	stm := g.Id
+func (g *GoSTMSource) BaseStateInitialize(w *Writer, names map[string]string) {
+	stm := names[g.Id]
 	i := g.initial
 	w.writeln("var " + stm + "CurrentState " + stm + "State\n")
 	w.writeln("func init() {")
@@ -148,8 +148,8 @@ func (g *GoSTMSource) BaseStateInitialize(w *Writer) {
 }
 
 //
-func (g *GoSTMSource) BaseTransDefinition(w *Writer) {
-	stm := g.Id
+func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
+	stm := names[g.Id]
 	ss := g.ss
 	ts := g.ts
 	if g.root {
@@ -169,6 +169,7 @@ func (g *GoSTMSource) BaseTransDefinition(w *Writer) {
 		w.writeln(s.Name + "Do()")
 		for _, t := range ts[s] {
 			w.writeln("if " + t.Event.Name + "Cond() {")
+			w.writeln(t.Event.Name + "Action()")
 			w.writeln(stm + "CurrentState = " + t.Dest.Name)
 			w.writeln(stm + "Eod = Exit")
 			w.writeln("}")
@@ -191,15 +192,17 @@ func (g *GoSTMSource) ImplHeader(w *Writer) {
 }
 
 // A function to generate template functions
-func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource) {
+func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource, names map[string]string) {
 	ss := g.ss
 	ts := g.ts
 	for _, s := range ss {
-		w.writeln("// functions for State " + s.Name + "\n")
+		w.writeln("///////////////////////////////////////////////")
+		w.writeln("// functions for State " + s.Name)
+		w.writeln("///////////////////////////////////////////////\n")
 		w.writeln("func " + s.Name + "Entry() {")
 		if stms, ok := sttree[s]; ok {
 			for _, stm := range stms {
-				w.writeln(stm.Id + "Initialize() // Call the initialize for " + stm.Id)
+				w.writeln(names[stm.Id] + "Initialize() // Call the initialize for " + names[stm.Id])
 			}
 		}
 		w.writeln("if debug {")
@@ -210,7 +213,7 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource)
 		w.writeln("func " + s.Name + "Do() {")
 		if stms, ok := sttree[s]; ok {
 			for _, stm := range stms {
-				w.writeln(stm.Id + "Task() // Call the task for " + stm.Id)
+				w.writeln(names[stm.Id] + "Task() // Call the task for " + names[stm.Id])
 			}
 		}
 		w.writeln("// Please write a do process for State " + s.Name)
@@ -221,10 +224,25 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource)
 		w.writeln("}")
 		w.writeln("// Please write an exit process for State " + s.Name)
 		w.writeln("}\n")
+	}
+	w.writeln("///////////////////////////////////////////////")
+	w.writeln("// Conditions")
+	w.writeln("///////////////////////////////////////////////\n")
+	for _, s := range ss {
 		for _, t := range ts[s] {
 			w.writeln("func " + t.Event.Name + "Cond() bool {")
 			w.writeln("// Please edit the condition")
 			w.writeln("return true")
+			w.writeln("}\n")
+		}
+	}
+	w.writeln("///////////////////////////////////////////////")
+	w.writeln("// Actions")
+	w.writeln("///////////////////////////////////////////////\n")
+	for _, s := range ss {
+		for _, t := range ts[s] {
+			w.writeln("func " + t.Event.Name + "Action() {")
+			w.writeln("// Please edit the action when " + t.Event.Name + " occurs")
 			w.writeln("}\n")
 		}
 	}

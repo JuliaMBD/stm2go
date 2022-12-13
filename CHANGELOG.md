@@ -1,3 +1,8 @@
+# stm2go 0.3.0
+
+- bug fix: model name are loaded from models.json
+- add actions
+
 # stm2go 0.2.2
 
 - bug fix: model name are loaded from models.json
