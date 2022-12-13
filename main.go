@@ -39,9 +39,10 @@ func usage() {
 	msg := `usage: stm2go <command> [<args>]
 
 commands: (command help: stm2go command -h)
-  init      Initialize directories
-  generate  Generate Go source files
-  help      Display this message`
+  init      Initialize directories.
+  generate  Generate Go source files from draw.io/diagrams.net file.
+  example   Generate an example of draw.io/diagrams.net file.
+  help      Display this message.`
 
 	fmt.Println(msg)
 }
@@ -57,6 +58,8 @@ func main() {
 			cmdinit(args)
 		case "generate":
 			cmdgen(args)
+		case "example":
+			cmdexample(args)
 		case "help":
 			usage()
 		default:
@@ -231,4 +234,14 @@ func cmdgen(args []string) {
 
 	fmt.Println("Please execute:")
 	fmt.Println("    go mod init " + pkg.Fullpkgname + "; go mod tidy")
+}
+
+func cmdexample(args []string) {
+	var outfile string
+	flag.StringVar(&outfile, "o", "example.drawio", "Name of the example of draw.io/diagras.net file.")
+	flag.CommandLine.Parse(args)
+
+	drawio := []byte(`<mxfile host="app.diagrams.net" modified="2022-12-13T05:07:33.635Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36" etag="_CkyxOyHdMj36E9PywLI" version="20.5.3" type="google"><diagram id="3Aa49lHglVZ3ABnJkFck" name="Page 1">7VjbbuIwEP0aHkG5lNtjobRbqRVdUWm3TytDnMStsSPHFOjXr+1MLgYKoUvZrrRIQObYHjszc47jNPzhfHUjUBLf8wDThucEq4Z/1fA8t9/rqj+NrAFxOm6GRIIEgJXAhLzhvCOgCxLg1OooOaeSJDY444zhmbQwJARf2t1CTu1ZExTBjE4JTGaI4q1uP0gg4wzted0S/4ZJFOczu51+1jJHeWdwnMYo4MsK5I8a/lBwLrOr+WqIqY5eHpds3PU7rcXCBGayzoDR4PJWjJaT77/Sce+mG9xfJLdN9wIWJ9f5HeNABQBMLmTMI84QHZXoQPAFC7B26yir7HPHeaJAV4HPWMo1ZBMtJFdQLOcUWvGKyJ+V6yftqtUG62oFno2xzg0mxfpn1aiM0mY5zFj5uO0wQeRSvhAzvCc2kEiJRITlvhhCgnXgKjNAFm4wn2O1INVBYIokebUrC0GBRkW/MofqAtJoTD591iXuORRNMc2GwRrXCXgljEiCaCqRxFnb3vz3KyuFeqmWAqWKZzrly5hIPEmQCdhScd1OKEqTjHwhWenCGEQUpSlkIH3BchaDERJKh5xyYWbwHfPZl6ZXLCRe7Y0rtDY7DmSiEBuwlyVzfYDiCmlz7IhUKBOycQzZ2v/JdohEh9nmnYltNXPagzJFdAFTPS4EG7Odqb7LiGtRh5KIqeuZChlWrBjogidqA7qEhjkJgqwScEre0NT408FOOGHS3E970Ghf7Qz/3jrcolaxjcIs1k61i3JOy3dd1yZdZtWOPvh+0DdT4bLbt7wWG1XugodhqupkM33FEuvq5x0OxmG4qaJ15dOthmdbP9MlmVPEbBq7h+X0XfU8hUq2XVslu+0tkXR3qWTvXCrZ+Zsq6Vgq2a0pk64tk91P1Ml8xz//U8k7TC0KA+rJ62wUSrZUGHYMX+vVS0GBDQXOWf01JbhzKgluOi2nl3P4tBpsS/BnKjD7sAB75xVgtS4hQUQ8/0SK7PW/tiIXJ9gvoMgHBFkZD1gQFQZN5I1n2fLx9clS5d0ajVlwqV8gKJNxU0IKuSY6kqY9QGlc1NMfCPo/ccx8jEmqy0T/IPVlXOLWJmk1WIez+w+daYyMQ+PtIFOnaPYSmVobLyQlOk8GD5B4GatRRJp8tpz2EafS0HxOxO6LjVNps7d9Ku3tYHdxev04vZVZvl/K1Ll8TeePfgM=</diagram></mxfile>`)
+
+	os.WriteFile(outfile, drawio, 0644)
 }
