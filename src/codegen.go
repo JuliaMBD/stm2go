@@ -125,9 +125,9 @@ func (g *GoSTMSource) BaseStateDefinition(w *Writer, names map[string]string) {
 	w.writeln("const (")
 	for i, s := range ss {
 		if i == 0 {
-			w.writeln(s.Name + " " + stm + "State = iota")
+			w.writeln(stm + s.Name + " " + stm + "State = iota")
 		} else {
-			w.writeln(s.Name)
+			w.writeln(stm + s.Name)
 		}
 	}
 	w.writeln(")\n")
@@ -137,13 +137,13 @@ func (g *GoSTMSource) BaseStateDefinition(w *Writer, names map[string]string) {
 // A function to generate init function
 func (g *GoSTMSource) BaseStateInitialize(w *Writer, names map[string]string) {
 	stm := names[g.Id]
-	i := g.initial
+	i := stm + g.initial.Name
 	w.writeln("var " + stm + "CurrentState " + stm + "State\n")
 	w.writeln("func init() {")
 	w.writeln(stm + "Initialize()")
 	w.writeln("}\n")
 	w.writeln("func " + stm + "Initialize() {")
-	w.writeln(stm + "CurrentState = " + i.Name)
+	w.writeln(stm + "CurrentState = " + i)
 	w.writeln("}\n")
 }
 
@@ -160,23 +160,24 @@ func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 	w.writeln("func " + stm + "Task() {")
 	w.writeln("switch " + stm + "CurrentState {")
 	for _, s := range ss {
-		w.writeln("case " + s.Name + ":")
+		w.writeln("case " + stm + s.Name + ":")
 		w.writeln("if " + stm + "Eod == Entry {")
-		w.writeln(s.Name + "Entry()")
+		w.writeln(stm + s.Name + "Entry()")
 		w.writeln(stm + "Eod = Do")
 		w.writeln("}")
 		w.writeln("if " + stm + "Eod == Do {")
-		w.writeln(s.Name + "Do()")
+		w.writeln(stm + s.Name + "Do()")
 		for _, t := range ts[s] {
-			w.writeln("if " + t.Event.Name + "Cond() {")
-			w.writeln(t.Event.Name + "Action()")
-			w.writeln(stm + "CurrentState = " + t.Dest.Name)
+			tr := stm + s.Name + t.Event.Name
+			w.writeln("if " + tr + "Cond() {")
+			w.writeln(tr + "Action()")
+			w.writeln(stm + "CurrentState = " + stm + t.Dest.Name)
 			w.writeln(stm + "Eod = Exit")
 			w.writeln("}")
 		}
 		w.writeln("}")
 		w.writeln("if " + stm + "Eod == Exit {")
-		w.writeln(s.Name + "Exit()")
+		w.writeln(stm + s.Name + "Exit()")
 		w.writeln(stm + "Eod = Entry")
 		w.writeln("}")
 	}
@@ -193,36 +194,37 @@ func (g *GoSTMSource) ImplHeader(w *Writer) {
 
 // A function to generate template functions
 func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource, names map[string]string) {
+	stm := names[g.Id]
 	ss := g.ss
 	ts := g.ts
 	for _, s := range ss {
 		w.writeln("///////////////////////////////////////////////")
-		w.writeln("// functions for State " + s.Name)
+		w.writeln("// functions for State " + stm + s.Name)
 		w.writeln("///////////////////////////////////////////////\n")
-		w.writeln("func " + s.Name + "Entry() {")
+		w.writeln("func " + stm + s.Name + "Entry() {")
 		if stms, ok := sttree[s]; ok {
 			for _, stm := range stms {
 				w.writeln(names[stm.Id] + "Initialize() // Call the initialize for " + names[stm.Id])
 			}
 		}
 		w.writeln("if debug {")
-		w.writeln("logger.Println(\"Entering State " + s.Name + "\")")
+		w.writeln("logger.Println(\"Entering State " + stm + s.Name + "\")")
 		w.writeln("}")
-		w.writeln("// Please write an enter process for State " + s.Name)
+		w.writeln("// Please write an enter process for State " + stm + s.Name)
 		w.writeln("}\n")
-		w.writeln("func " + s.Name + "Do() {")
+		w.writeln("func " + stm + s.Name + "Do() {")
 		if stms, ok := sttree[s]; ok {
 			for _, stm := range stms {
 				w.writeln(names[stm.Id] + "Task() // Call the task for " + names[stm.Id])
 			}
 		}
-		w.writeln("// Please write a do process for State " + s.Name)
+		w.writeln("// Please write a do process for State " + stm + s.Name)
 		w.writeln("}\n")
-		w.writeln("func " + s.Name + "Exit() {")
+		w.writeln("func " + stm + s.Name + "Exit() {")
 		w.writeln("if debug {")
-		w.writeln("logger.Println(\"Leaving State " + s.Name + "\")")
+		w.writeln("logger.Println(\"Leaving State " + stm + s.Name + "\")")
 		w.writeln("}")
-		w.writeln("// Please write an exit process for State " + s.Name)
+		w.writeln("// Please write an exit process for State " + stm + s.Name)
 		w.writeln("}\n")
 	}
 	w.writeln("///////////////////////////////////////////////")
@@ -230,7 +232,8 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource,
 	w.writeln("///////////////////////////////////////////////\n")
 	for _, s := range ss {
 		for _, t := range ts[s] {
-			w.writeln("func " + t.Event.Name + "Cond() bool {")
+			tr := stm + s.Name + t.Event.Name
+			w.writeln("func " + tr + "Cond() bool {")
 			w.writeln("// Please edit the condition")
 			w.writeln("return true")
 			w.writeln("}\n")
@@ -241,8 +244,9 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource,
 	w.writeln("///////////////////////////////////////////////\n")
 	for _, s := range ss {
 		for _, t := range ts[s] {
-			w.writeln("func " + t.Event.Name + "Action() {")
-			w.writeln("// Please edit the action when " + t.Event.Name + " occurs")
+			tr := stm + s.Name + t.Event.Name
+			w.writeln("func " + tr + "Action() {")
+			w.writeln("// Please edit the action when " + t.Event.Name + " occurs at State " + s.Name)
 			w.writeln("}\n")
 		}
 	}
@@ -266,7 +270,7 @@ func (g *GoPkgSource) Common(w *Writer) {
 }
 
 // A function to generate an example of test code
-func (g *GoPkgSource) TestGen(w *Writer, stmname string) {
+func (g *GoPkgSource) TestGen(w *Writer, stms []*GoSTMSource, names map[string]string) {
 	w.writeln("// This file was generated by a program.")
 	w.writeln("package " + g.Pkgname + "\n")
 	w.writeln("import (\n\"log\"\n\"testing\"\n\"time\"\n stm2go \"github.com/JuliaMBD/stm2go/testing\"\n)\n")
@@ -280,7 +284,9 @@ func (g *GoPkgSource) TestGen(w *Writer, stmname string) {
 	w.writeln("env.Add(stm2go.Continue, func() {")
 	w.writeln("for {")
 	w.writeln("time.Sleep(10 * time.Millisecond)")
-	w.writeln(stmname + "Task()")
+	for _, stm := range stms {
+		w.writeln(names[stm.Id] + "Task()")
+	}
 	w.writeln("}")
 	w.writeln("})")
 	w.writeln("env.Add(stm2go.Done, func() {")
@@ -292,12 +298,14 @@ func (g *GoPkgSource) TestGen(w *Writer, stmname string) {
 }
 
 // A function to generate an example of main
-func (g *GoPkgSource) GenMain(w *Writer, stmname string) {
+func (g *GoPkgSource) GenMain(w *Writer, stms []*GoSTMSource, names map[string]string) {
 	w.writeln("package main\n")
 	w.writeln("import (\"time\"\n" + g.Pkgname + " \"" + g.Fullpkgname + "/" + srcdir + "\"\n)\n")
 	w.writeln("func main() {")
 	w.writeln("for {")
-	w.writeln(g.Pkgname + ".Entry" + stmname + "Task()")
+	for _, stm := range stms {
+		w.writeln(g.Pkgname + ".Entry" + names[stm.Id] + "Task()")
+	}
 	w.writeln("time.Sleep(time.Millisecond * 10)")
 	w.writeln("}")
 	w.writeln("}")

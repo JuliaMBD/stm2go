@@ -93,12 +93,12 @@ func cmdgen(args []string) {
 	flag.StringVar(&mainfn, "main", "main.go", "Name of main file. Default is main.go.")
 	flag.CommandLine.Parse(args)
 
+	// Read config
 	if !fileExists(config_file) {
 		fmt.Println("Did not find " + config_file + ".")
 		fmt.Println("Probably this is not a directory for stm2go.")
 		os.Exit(1)
 	}
-
 	if raw, err := os.ReadFile(config_file); err == nil {
 		json.Unmarshal(raw, &pkg)
 	} else {
@@ -106,26 +106,27 @@ func cmdgen(args []string) {
 		os.Exit(1)
 	}
 
+	// Read XML
 	infile := flag.Arg(0)
 	if infile == "" {
 		fmt.Println("The name of xml file is not detected. Use the default xmlfile '" + default_xmlname + "'")
 		infile = default_packagename
 	}
-
 	if !fileExists(infile) {
 		fmt.Println("Did not find XML file: " + infile)
 		os.Exit(1)
 	}
-
 	xml, err := os.ReadFile(infile)
 	if err != nil {
 		fmt.Println("Fail to read XML file: " + infile)
 		os.Exit(1)
 	}
 
+	// Parse XML
 	stms, states := stm2go.Parse(xml)
 	stmap, sttree, root := stm2go.NewGoSTMMap(pkg, stms, states)
 
+	// Define STM names
 	if !fileExists(model_file) {
 		fmt.Println("Create model file: " + model_file)
 		tmp := make(map[string]string)
@@ -142,9 +143,11 @@ func cmdgen(args []string) {
 		fmt.Println("Fail to read " + model_file)
 		os.Exit(1)
 	}
-	for _, s := range stmap {
-		if _, ok := names[s.Id]; !ok {
-			names[s.Id] = "stm" + strconv.Itoa(len(names))
+	for parent, stms := range sttree {
+		for _, s := range stms {
+			if _, ok := names[s.Id]; !ok {
+				names[s.Id] = parent.Name + "Stm" + strconv.Itoa(len(names))
+			}
 		}
 	}
 	b, err := json.MarshalIndent(names, "", "  ")
@@ -154,14 +157,8 @@ func cmdgen(args []string) {
 	}
 	os.WriteFile(model_file, b, 0644)
 
+	// work
 	var fn string
-	var entryname string
-	if s, ok := sttree[root]; ok && len(s) == 1 {
-		entryname = names[s[0].Id]
-	} else {
-		fmt.Println("Error: There are two entry points")
-		os.Exit(1)
-	}
 
 	// generate directory
 	if err := os.MkdirAll(srcdir, 0777); err != nil {
@@ -172,7 +169,7 @@ func cmdgen(args []string) {
 	// generate common file
 	fn = srcdir + "/common.go"
 	if force == true || !fileExists(fn) {
-		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
+		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664); err == nil {
 			w := stm2go.NewWriter(f)
 			pkg.Common(w)
 			f.Close()
@@ -189,7 +186,7 @@ func cmdgen(args []string) {
 		// base
 		fn = srcdir + "/" + names[s.Id] + "_base.go"
 		if force == true || !fileExists(fn) {
-			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
+			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664); err == nil {
 				w := stm2go.NewWriter(f)
 				s.BaseHeader(w)
 				s.BaseStateDefinition(w, names)
@@ -207,7 +204,7 @@ func cmdgen(args []string) {
 		// impl
 		fn = srcdir + "/" + names[s.Id] + "_impl.go"
 		if force == true || !fileExists(fn) {
-			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
+			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664); err == nil {
 				w := stm2go.NewWriter(f)
 				s.ImplHeader(w)
 				s.ImplFunctions(w, sttree, names)
@@ -224,9 +221,9 @@ func cmdgen(args []string) {
 	// generate test and main files
 	fn = srcdir + "/" + pkg.Pkgname + "_test.go"
 	if force == true || !fileExists(fn) {
-		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
+		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664); err == nil {
 			w := stm2go.NewWriter(f)
-			pkg.TestGen(w, entryname)
+			pkg.TestGen(w, sttree[root], names)
 			f.Close()
 		} else {
 			fmt.Println("Fail to create " + fn)
@@ -238,9 +235,9 @@ func cmdgen(args []string) {
 
 	fn = mainfn
 	if !fileExists(fn) {
-		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
+		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664); err == nil {
 			w := stm2go.NewWriter(f)
-			pkg.GenMain(w, entryname)
+			pkg.GenMain(w, sttree[root], names)
 			f.Close()
 		} else {
 			fmt.Println("Fail to create " + fn)
