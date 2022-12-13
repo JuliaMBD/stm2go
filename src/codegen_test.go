@@ -27,8 +27,8 @@ func TestMakeTransitionMap(t *testing.T) {
 func TestGenHeader(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/example", "test")
-	stm := NewGoSTMSource("stm1test", nil, nil, nil, pkg)
-	stm.baseHeader(w)
+	stm := NewGoSTMSource("stm1test", nil, nil, nil, pkg, false)
+	stm.BaseHeader(w)
 }
 
 func TestGenStateDefinition(t *testing.T) {
@@ -38,8 +38,8 @@ func TestGenStateDefinition(t *testing.T) {
 		&State{"A"},
 		&State{"B"},
 	}
-	stm := NewGoSTMSource("stm1test", states, nil, states[0], pkg)
-	stm.baseStateDefinition(w)
+	stm := NewGoSTMSource("stm1test", states, nil, states[0], pkg, false)
+	stm.BaseStateDefinition(w)
 }
 
 func TestGenInitState(t *testing.T) {
@@ -49,8 +49,8 @@ func TestGenInitState(t *testing.T) {
 		&State{"A"},
 		&State{"B"},
 	}
-	stm := NewGoSTMSource("stm1test", states, nil, states[0], pkg)
-	stm.baseStateInitialize(w)
+	stm := NewGoSTMSource("stm1test", states, nil, states[0], pkg, false)
+	stm.BaseStateInitialize(w)
 }
 
 func TestGenTrans(t *testing.T) {
@@ -67,8 +67,8 @@ func TestGenTrans(t *testing.T) {
 			Event: &Event{"EventA"},
 		},
 	}
-	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg)
-	stm.baseTransDefinition(w)
+	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
+	stm.BaseTransDefinition(w)
 }
 
 func TestGenSTM(t *testing.T) {
@@ -85,17 +85,17 @@ func TestGenSTM(t *testing.T) {
 			Event: &Event{"EventA"},
 		},
 	}
-	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg)
-	stm.baseHeader(w)
-	stm.baseStateDefinition(w)
-	stm.baseStateInitialize(w)
-	stm.baseTransDefinition(w)
+	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
+	stm.BaseHeader(w)
+	stm.BaseStateDefinition(w)
+	stm.BaseStateInitialize(w)
+	stm.BaseTransDefinition(w)
 }
 
 func TestGenCommon(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/example", "test")
-	pkg.common(w)
+	pkg.Common(w)
 }
 
 func TestGenFunc(t *testing.T) {
@@ -112,20 +112,20 @@ func TestGenFunc(t *testing.T) {
 			Event: &Event{"EventA"},
 		},
 	}
-	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg)
-	stm.implFunctions(w, make(map[*State][]*GoSTMSource))
+	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
+	stm.ImplFunctions(w, make(map[*State][]*GoSTMSource))
 }
 
 func TestGenTest(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	gs := NewGoPkgSource("github.com/example", "test")
-	gs.testGen(w, "stm1")
+	gs.TestGen(w, "stm1")
 }
 
 func TestGenMain(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	gs := NewGoPkgSource("github.com/example", "test")
-	gs.testMain(w, "test")
+	gs.GenMain(w, "test")
 }
 
 func TestGenAllGo(t *testing.T) {
@@ -368,18 +368,18 @@ func TestGenGoSource1(t *testing.T) {
 	names := map[string]string{"1": "Model1", "3": "Model2"}
 	stmap, sttree, root := NewGoSTMMap(pkg, names, stms, states)
 
-	pkg.common(w)
+	pkg.Common(w)
 
 	s := stmap[0]
-	s.baseHeader(w)
-	s.baseStateDefinition(w)
-	s.baseStateInitialize(w)
-	s.baseTransDefinition(w)
+	s.BaseHeader(w)
+	s.BaseStateDefinition(w)
+	s.BaseStateInitialize(w)
+	s.BaseTransDefinition(w)
 
-	s.implHeader(w)
-	s.implFunctions(w, sttree)
+	s.ImplHeader(w)
+	s.ImplFunctions(w, sttree)
 
-	entryname := sttree[root][0].name
-	pkg.testGen(w, entryname)
-	pkg.testMain(w, entryname)
+	entryname := sttree[root][0].Name
+	pkg.TestGen(w, entryname)
+	pkg.GenMain(w, entryname)
 }
