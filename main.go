@@ -90,7 +90,11 @@ func cmdinit(args []string) {
 }
 
 func cmdgen(args []string) {
+	var force bool
+	var mainfn string
 	flag.StringVar(&srcdir, "d", "src", "Name of src directory. Default is src.")
+	flag.BoolVar(&force, "f", false, "Flag to overwrite Go sources excluding main file.")
+	flag.StringVar(&mainfn, "main", "main.go", "Name of main file. Default is main.go.")
 	flag.CommandLine.Parse(args)
 
 	if !fileExists(config_file) {
@@ -143,7 +147,7 @@ func cmdgen(args []string) {
 
 	// generate common file
 	fn = srcdir + "/common.go"
-	if !fileExists(fn) {
+	if force == true || !fileExists(fn) {
 		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
 			w := stm2go.NewWriter(f)
 			pkg.Common(w)
@@ -153,14 +157,14 @@ func cmdgen(args []string) {
 			os.Exit(1)
 		}
 	} else {
-		fmt.Println("File " + fn + " exists")
+		fmt.Println("File " + fn + " exists. Skip creating.")
 	}
 
 	// generate base and impl files
 	for _, s := range stmap {
 		// base
 		fn = srcdir + "/" + s.Name + "_base.go"
-		if !fileExists(fn) {
+		if force == true || !fileExists(fn) {
 			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
 				w := stm2go.NewWriter(f)
 				s.BaseHeader(w)
@@ -173,12 +177,12 @@ func cmdgen(args []string) {
 				os.Exit(1)
 			}
 		} else {
-			fmt.Println("File " + fn + " exists")
+			fmt.Println("File " + fn + " exists. Skip creating.")
 		}
 
 		// impl
 		fn = srcdir + "/" + s.Name + "_impl.go"
-		if !fileExists(fn) {
+		if force == true || !fileExists(fn) {
 			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
 				w := stm2go.NewWriter(f)
 				s.ImplHeader(w)
@@ -189,13 +193,13 @@ func cmdgen(args []string) {
 				os.Exit(1)
 			}
 		} else {
-			fmt.Println("File " + fn + " exists")
+			fmt.Println("File " + fn + " exists. Skip creating.")
 		}
 	}
 
 	// generate test and main files
 	fn = srcdir + "/" + pkg.Pkgname + "_test.go"
-	if !fileExists(fn) {
+	if force == true || !fileExists(fn) {
 		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
 			w := stm2go.NewWriter(f)
 			pkg.TestGen(w, entryname)
@@ -205,10 +209,10 @@ func cmdgen(args []string) {
 			os.Exit(1)
 		}
 	} else {
-		fmt.Println("File " + fn + " exists")
+		fmt.Println("File " + fn + " exists. Skip creating.")
 	}
 
-	fn = "main.go"
+	fn = mainfn
 	if !fileExists(fn) {
 		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE, 0664); err == nil {
 			w := stm2go.NewWriter(f)
@@ -220,7 +224,7 @@ func cmdgen(args []string) {
 
 		}
 	} else {
-		fmt.Println("File " + fn + " exists")
+		fmt.Println("File " + fn + " exists. Skip creating.")
 	}
 
 	fmt.Println("Code generation done.")
