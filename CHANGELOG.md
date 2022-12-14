@@ -1,3 +1,9 @@
+# stm2go 0.3.1
+
+- bug fix
+    - Namespace
+    - Overwrite
+
 # stm2go 0.3.0
 
 - bug fix: model name are loaded from models.json

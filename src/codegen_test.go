@@ -123,14 +123,40 @@ func TestGenFunc(t *testing.T) {
 
 func TestGenTest(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	gs := NewGoPkgSource("github.com/example", "test")
-	gs.TestGen(w, "stm1")
+	pkg := NewGoPkgSource("github.com/example", "test")
+	states := []*State{
+		&State{"A"},
+		&State{"B"},
+	}
+	trans := []*Transition{
+		&Transition{
+			Src:   states[0],
+			Dest:  states[1],
+			Event: &Event{"EventA"},
+		},
+	}
+	names := map[string]string{"stm1test": "stm0"}
+	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
+	pkg.TestGen(w, []*GoSTMSource{stm}, names)
 }
 
 func TestGenMain(t *testing.T) {
 	w := NewWriter(os.Stdout)
-	gs := NewGoPkgSource("github.com/example", "test")
-	gs.GenMain(w, "test")
+	pkg := NewGoPkgSource("github.com/example", "test")
+	states := []*State{
+		&State{"A"},
+		&State{"B"},
+	}
+	trans := []*Transition{
+		&Transition{
+			Src:   states[0],
+			Dest:  states[1],
+			Event: &Event{"EventA"},
+		},
+	}
+	names := map[string]string{"stm1test": "stm0"}
+	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
+	pkg.GenMain(w, []*GoSTMSource{stm}, names)
 }
 
 func TestGenAllGo(t *testing.T) {
@@ -384,7 +410,6 @@ func TestGenGoSource1(t *testing.T) {
 	s.ImplHeader(w)
 	s.ImplFunctions(w, sttree, names)
 
-	entryname := sttree[root][0].Id
-	pkg.TestGen(w, entryname)
-	pkg.GenMain(w, entryname)
+	pkg.TestGen(w, sttree[root], names)
+	pkg.GenMain(w, sttree[root], names)
 }
