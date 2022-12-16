@@ -131,23 +131,26 @@ func (g *GoSTMSource) BaseStateDefinition(w *Writer, names map[string]string) {
 		}
 	}
 	w.writeln(")\n")
-	w.writeln("var " + stm + "Eod Eod\n")
+	w.writeln("var " + stm + "Eod Eod")
+	w.writeln("var " + stm + "CurrentState " + stm + "State")
+	w.writeln("var " + stm + "NextState " + stm + "State\n")
 }
 
 // A function to generate init function
 func (g *GoSTMSource) BaseStateInitialize(w *Writer, names map[string]string) {
 	stm := names[g.Id]
 	i := stm + g.initial.Name
-	w.writeln("var " + stm + "CurrentState " + stm + "State\n")
 	w.writeln("func init() {")
 	w.writeln(stm + "Initialize()")
 	w.writeln("}\n")
 	w.writeln("func " + stm + "Initialize() {")
+	w.writeln(stm + "Eod = Entry")
 	w.writeln(stm + "CurrentState = " + i)
+	w.writeln(stm + "NextState = " + i)
 	w.writeln("}\n")
 }
 
-//
+// A function to generate base for a given STM
 func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 	stm := names[g.Id]
 	ss := g.ss
@@ -155,6 +158,7 @@ func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 	if g.root {
 		w.writeln("func Entry" + stm + "Task() {")
 		w.writeln(stm + "Task()")
+		w.writeln(stm + "Update()")
 		w.writeln("}\n")
 	}
 	w.writeln("func " + stm + "Task() {")
@@ -171,7 +175,7 @@ func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 			tr := stm + s.Name + t.Event.Name
 			w.writeln("if " + tr + "Cond() {")
 			w.writeln(tr + "Action()")
-			w.writeln(stm + "CurrentState = " + stm + t.Dest.Name)
+			w.writeln(stm + "NextState = " + stm + t.Dest.Name)
 			w.writeln(stm + "Eod = Exit")
 			w.writeln("}")
 		}
@@ -182,6 +186,25 @@ func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 		w.writeln("}")
 	}
 	w.writeln("}")
+	w.writeln("}\n")
+}
+
+// A function to generate base for a given STM
+func (g *GoSTMSource) UpdateDefinition(w *Writer, sttree map[*State][]*GoSTMSource, names map[string]string) {
+	stm := names[g.Id]
+	ss := g.ss
+	w.writeln("func " + stm + "Update() {")
+	w.writeln("switch " + stm + "CurrentState {")
+	for _, s := range ss {
+		w.writeln("case " + stm + s.Name + ":")
+		if stms, ok := sttree[s]; ok {
+			for _, stm := range stms {
+				w.writeln(names[stm.Id] + "Update() // Call the update for " + names[stm.Id])
+			}
+		}
+	}
+	w.writeln("}")
+	w.writeln(stm + "CurrentState = " + stm + "NextState")
 	w.writeln("}\n")
 }
 
@@ -285,7 +308,7 @@ func (g *GoPkgSource) TestGen(w *Writer, stms []*GoSTMSource, names map[string]s
 	w.writeln("for {")
 	w.writeln("time.Sleep(10 * time.Millisecond)")
 	for _, stm := range stms {
-		w.writeln(names[stm.Id] + "Task()")
+		w.writeln("Entry" + names[stm.Id] + "Task()")
 	}
 	w.writeln("}")
 	w.writeln("})")

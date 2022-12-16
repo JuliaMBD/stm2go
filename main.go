@@ -192,6 +192,7 @@ func cmdgen(args []string) {
 				s.BaseStateDefinition(w, names)
 				s.BaseStateInitialize(w, names)
 				s.BaseTransDefinition(w, names)
+				s.UpdateDefinition(w, sttree, names)
 				f.Close()
 			} else {
 				fmt.Println("Fail to create " + fn)
