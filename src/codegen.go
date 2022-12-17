@@ -192,8 +192,6 @@ func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 	stm := names[g.Id]
 	ss := g.sortState()
 	ts := g.ts
-	inex := g.inexts
-	outex := g.outexts
 	if g.root {
 		w.writeln("func Entry" + stm + "Task() {")
 		w.writeln(stm + "Task()")
@@ -219,7 +217,48 @@ func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 			w.writeln("}")
 		}
 		w.writeln("}")
-		for _, t := range inex[s] {
+		w.writeln("if " + stm + "Eod == Exit {")
+		w.writeln(stm + s.Name + "Exit()")
+		w.writeln(stm + "Eod = Entry")
+		w.writeln("}")
+	}
+	w.writeln("}")
+	w.writeln("}\n")
+}
+
+// A function to generate base for a given STM
+func (g *GoSTMSource) BaseTransDefinitionWithExternal(w *Writer, names map[string]string) {
+	stm := names[g.Id]
+	ss := g.sortState()
+	ts := g.ts
+	ints := g.inexts
+	outts := g.outexts
+	if g.root {
+		w.writeln("func Entry" + stm + "Task() {")
+		w.writeln(stm + "Task()")
+		w.writeln(stm + "Update()")
+		w.writeln("}\n")
+	}
+	w.writeln("func " + stm + "Task() {")
+	w.writeln("switch " + stm + "CurrentState {")
+	for _, s := range ss {
+		w.writeln("case " + stm + s.Name + ":")
+		w.writeln("if " + stm + "Eod == Entry {")
+		w.writeln(stm + s.Name + "Entry()")
+		w.writeln(stm + "Eod = Do")
+		w.writeln("}")
+		w.writeln("if " + stm + "Eod == Do {")
+		w.writeln(stm + s.Name + "Do()")
+		for _, t := range ts[s] {
+			tr := stm + s.Name + t.Event.Name
+			w.writeln("if " + tr + "Cond() {")
+			w.writeln(tr + "Action()")
+			w.writeln(stm + "NextState = " + stm + t.Dest.Name)
+			w.writeln(stm + "Eod = Exit")
+			w.writeln("}")
+		}
+		w.writeln("}")
+		for _, t := range ints[s] {
 			tr := stm + s.Name + t.Event.Name
 			w.writeln("// external (inbound)")
 			w.writeln("if " + tr + "Cond() {")
@@ -227,7 +266,7 @@ func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 			w.writeln(stm + "Eod = Exit")
 			w.writeln("}")
 		}
-		for _, t := range outex[s] {
+		for _, t := range outts[s] {
 			tr := stm + s.Name + t.Event.Name
 			w.writeln("// external (outbound)")
 			w.writeln("if " + tr + "Cond() {")
@@ -273,6 +312,66 @@ func (g *GoSTMSource) ImplHeader(w *Writer) {
 
 // A function to generate template functions
 func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource, names map[string]string) {
+	stm := names[g.Id]
+	ss := g.sortState()
+	ts := g.ts
+	for _, s := range ss {
+		w.writeln("///////////////////////////////////////////////")
+		w.writeln("// functions for State " + stm + s.Name)
+		w.writeln("///////////////////////////////////////////////\n")
+		w.writeln("func " + stm + s.Name + "Entry() {")
+		if stms, ok := sttree[s]; ok {
+			for _, stm := range stms {
+				w.writeln(names[stm.Id] + "Initialize() // Call the initialize for " + names[stm.Id])
+			}
+		}
+		w.writeln("if debug {")
+		w.writeln("logger.Println(\"Entering State " + stm + s.Name + "\")")
+		w.writeln("}")
+		w.writeln("// Please write an enter process for State " + stm + s.Name)
+		w.writeln("}\n")
+		w.writeln("func " + stm + s.Name + "Do() {")
+		if stms, ok := sttree[s]; ok {
+			for _, stm := range stms {
+				w.writeln(names[stm.Id] + "Task() // Call the task for " + names[stm.Id])
+			}
+		}
+		w.writeln("// Please write a do process for State " + stm + s.Name)
+		w.writeln("}\n")
+		w.writeln("func " + stm + s.Name + "Exit() {")
+		w.writeln("if debug {")
+		w.writeln("logger.Println(\"Leaving State " + stm + s.Name + "\")")
+		w.writeln("}")
+		w.writeln("// Please write an exit process for State " + stm + s.Name)
+		w.writeln("}\n")
+	}
+	w.writeln("///////////////////////////////////////////////")
+	w.writeln("// Conditions")
+	w.writeln("///////////////////////////////////////////////\n")
+	for _, s := range ss {
+		for _, t := range ts[s] {
+			tr := stm + s.Name + t.Event.Name
+			w.writeln("func " + tr + "Cond() bool {")
+			w.writeln("// Please edit the condition")
+			w.writeln("return true")
+			w.writeln("}\n")
+		}
+	}
+	w.writeln("///////////////////////////////////////////////")
+	w.writeln("// Actions")
+	w.writeln("///////////////////////////////////////////////\n")
+	for _, s := range ss {
+		for _, t := range ts[s] {
+			tr := stm + s.Name + t.Event.Name
+			w.writeln("func " + tr + "Action() {")
+			w.writeln("// Please edit the action when " + t.Event.Name + " occurs at State " + s.Name)
+			w.writeln("}\n")
+		}
+	}
+}
+
+// A function to generate template functions
+func (g *GoSTMSource) ImplFunctionsWithExternal(w *Writer, sttree map[*State][]*GoSTMSource, names map[string]string) {
 	stm := names[g.Id]
 	ss := g.sortState()
 	ts := g.ts

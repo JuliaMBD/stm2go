@@ -87,9 +87,11 @@ func cmdinit(args []string) {
 
 func cmdgen(args []string) {
 	var force bool
+	var external bool
 	var mainfn string
 	flag.StringVar(&srcdir, "d", "src", "Name of src directory. Default is src.")
 	flag.BoolVar(&force, "f", false, "Flag to overwrite Go sources excluding main file.")
+	flag.BoolVar(&external, "e", false, "Flag to allow external transitions.")
 	flag.StringVar(&mainfn, "main", "main.go", "Name of main file. Default is main.go.")
 	flag.CommandLine.Parse(args)
 
@@ -191,7 +193,11 @@ func cmdgen(args []string) {
 				s.BaseHeader(w)
 				s.BaseStateDefinition(w, names)
 				s.BaseStateInitialize(w, names)
-				s.BaseTransDefinition(w, names)
+				if external {
+					s.BaseTransDefinitionWithExternal(w, names)
+				} else {
+					s.BaseTransDefinition(w, names)
+				}
 				s.UpdateDefinition(w, sttree, names)
 				f.Close()
 			} else {
@@ -208,7 +214,11 @@ func cmdgen(args []string) {
 			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664); err == nil {
 				w := stm2go.NewWriter(f)
 				s.ImplHeader(w)
-				s.ImplFunctions(w, sttree, names)
+				if external {
+					s.ImplFunctionsWithExternal(w, sttree, names)
+				} else {
+					s.ImplFunctions(w, sttree, names)
+				}
 				f.Close()
 			} else {
 				fmt.Println("Fail to create " + fn)
