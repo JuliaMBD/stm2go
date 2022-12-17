@@ -8,25 +8,28 @@ import (
 var logger *log.Logger
 
 type StateMachine struct {
-	Parent      string
-	States      []*State
-	Events      []*Event
-	Transitions []*Transition
-	Initial     *State
+	Parent        string
+	States        []*State
+	Events        []*Event
+	Transitions   []*Transition
+	ExTransitions []*Transition
+	Initial       *State
 }
 
 func NewStateMachine(parent string) *StateMachine {
 	return &StateMachine{
-		Parent:      parent,
-		States:      make([]*State, 0),
-		Events:      make([]*Event, 0),
-		Transitions: make([]*Transition, 0),
-		Initial:     nil,
+		Parent:        parent,
+		States:        make([]*State, 0),
+		Events:        make([]*Event, 0),
+		Transitions:   make([]*Transition, 0),
+		ExTransitions: make([]*Transition, 0),
+		Initial:       nil,
 	}
 }
 
 type State struct {
 	Name string
+	Stm  *StateMachine
 }
 
 type Event struct {
@@ -61,7 +64,7 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 			if _, ok := sm[p]; ok == false {
 				sm[p] = NewStateMachine(p)
 			}
-			s := &State{x.Value}
+			s := &State{x.Value, sm[p]}
 			sm[p].States = append(sm[p].States, s)
 			states[x.Id] = s
 			mxstates[x.Id] = &elems[i]
@@ -107,10 +110,24 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 			}
 			smevents[key{s, edges[x.Id]}] = struct{}{}
 			s.Transitions = append(s.Transitions, t)
+		} else if ok1 && ok2 && src.Parent != dest.Parent {
+			logger.Printf("Find a transition accossing STMs between %s and %s\n", src.Parent, dest.Parent)
+			s1 := sm[src.Parent]
+			s2 := sm[dest.Parent]
+			t := &Transition{
+				Src:   states[src.Id],
+				Dest:  states[dest.Id],
+				Event: edges[x.Id],
+			}
+			smevents[key{s1, edges[x.Id]}] = struct{}{}
+			s1.ExTransitions = append(s1.ExTransitions, t)
+			s2.ExTransitions = append(s2.ExTransitions, t)
 		} else if ok3 && ok2 && isrc.Parent == dest.Parent && isrc.Parent == x.Parent {
 			// set initital
 			s := sm[isrc.Parent]
 			s.Initial = states[dest.Id]
+		} else {
+			logger.Println("Ignoring a transition ", x)
 		}
 	}
 	for k, _ := range smevents {

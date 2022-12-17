@@ -8,8 +8,8 @@ import (
 
 func TestMakeTransitionMap(t *testing.T) {
 	ss := []*State{
-		&State{"A"},
-		&State{"B"},
+		&State{"A", nil},
+		&State{"B", nil},
 	}
 	ts := []*Transition{
 		&Transition{
@@ -27,7 +27,7 @@ func TestMakeTransitionMap(t *testing.T) {
 func TestGenHeader(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/example", "test")
-	stm := NewGoSTMSource("stm1test", nil, nil, nil, pkg, false)
+	stm := NewGoSTMSource("stm1test", nil, nil, nil, nil, pkg, false)
 	stm.BaseHeader(w)
 }
 
@@ -35,11 +35,11 @@ func TestGenStateDefinition(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
-		&State{"A"},
-		&State{"B"},
+		&State{"A", nil},
+		&State{"B", nil},
 	}
 	names := map[string]string{"stm1test": "stm0"}
-	stm := NewGoSTMSource("stm1test", states, nil, states[0], pkg, false)
+	stm := NewGoSTMSource("stm1test", states, nil, nil, states[0], pkg, false)
 	stm.BaseStateDefinition(w, names)
 }
 
@@ -47,11 +47,11 @@ func TestGenInitState(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
-		&State{"A"},
-		&State{"B"},
+		&State{"A", nil},
+		&State{"B", nil},
 	}
 	names := map[string]string{"stm1test": "stm0"}
-	stm := NewGoSTMSource("stm1test", states, nil, states[0], pkg, false)
+	stm := NewGoSTMSource("stm1test", states, nil, nil, states[0], pkg, false)
 	stm.BaseStateInitialize(w, names)
 }
 
@@ -59,8 +59,8 @@ func TestGenTrans(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
-		&State{"A"},
-		&State{"B"},
+		&State{"A", nil},
+		&State{"B", nil},
 	}
 	trans := []*Transition{
 		&Transition{
@@ -70,7 +70,7 @@ func TestGenTrans(t *testing.T) {
 		},
 	}
 	names := map[string]string{"stm1test": "stm0"}
-	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
+	stm := NewGoSTMSource("stm1test", states, trans, nil, states[0], pkg, false)
 	stm.BaseTransDefinition(w, names)
 }
 
@@ -78,8 +78,8 @@ func TestGenSTM(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
-		&State{"A"},
-		&State{"B"},
+		&State{"A", nil},
+		&State{"B", nil},
 	}
 	trans := []*Transition{
 		&Transition{
@@ -89,7 +89,7 @@ func TestGenSTM(t *testing.T) {
 		},
 	}
 	names := map[string]string{"stm1test": "stm0"}
-	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
+	stm := NewGoSTMSource("stm1test", states, trans, nil, states[0], pkg, false)
 	stm.BaseHeader(w)
 	stm.BaseStateDefinition(w, names)
 	stm.BaseStateInitialize(w, names)
@@ -106,8 +106,8 @@ func TestGenFunc(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
-		&State{"A"},
-		&State{"B"},
+		&State{"A", nil},
+		&State{"B", nil},
 	}
 	trans := []*Transition{
 		&Transition{
@@ -117,7 +117,7 @@ func TestGenFunc(t *testing.T) {
 		},
 	}
 	names := map[string]string{"stm1test": "stm0"}
-	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
+	stm := NewGoSTMSource("stm1test", states, trans, nil, states[0], pkg, false)
 	stm.ImplFunctions(w, make(map[*State][]*GoSTMSource), names)
 }
 
@@ -125,8 +125,8 @@ func TestGenTest(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
-		&State{"A"},
-		&State{"B"},
+		&State{"A", nil},
+		&State{"B", nil},
 	}
 	trans := []*Transition{
 		&Transition{
@@ -136,7 +136,7 @@ func TestGenTest(t *testing.T) {
 		},
 	}
 	names := map[string]string{"stm1test": "stm0"}
-	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
+	stm := NewGoSTMSource("stm1test", states, trans, nil, states[0], pkg, false)
 	pkg.TestGen(w, []*GoSTMSource{stm}, names)
 }
 
@@ -144,8 +144,8 @@ func TestGenMain(t *testing.T) {
 	w := NewWriter(os.Stdout)
 	pkg := NewGoPkgSource("github.com/example", "test")
 	states := []*State{
-		&State{"A"},
-		&State{"B"},
+		&State{"A", nil},
+		&State{"B", nil},
 	}
 	trans := []*Transition{
 		&Transition{
@@ -155,7 +155,7 @@ func TestGenMain(t *testing.T) {
 		},
 	}
 	names := map[string]string{"stm1test": "stm0"}
-	stm := NewGoSTMSource("stm1test", states, trans, states[0], pkg, false)
+	stm := NewGoSTMSource("stm1test", states, trans, nil, states[0], pkg, false)
 	pkg.GenMain(w, []*GoSTMSource{stm}, names)
 }
 

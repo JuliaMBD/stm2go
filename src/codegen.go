@@ -14,11 +14,22 @@ type GoPkgSource struct {
 
 type GoSTMSource struct {
 	Id      string
-	ss      []*State
-	ts      map[*State][]*Transition
-	initial *State
-	pkg     *GoPkgSource
-	root    bool
+	states  map[*State]struct{}      // set for states to be used in hasState?
+	ts      map[*State][]*Transition // local transitions
+	inexts  map[*State][]*Transition // inbound external transitions
+	outexts map[*State][]*Transition // outbound external transitions
+	initial *State                   // initial state
+	pkg     *GoPkgSource             // pakcage
+	root    bool                     // indicater the STM is root or not
+}
+
+// A utility function to make a unique order for states
+func (g *GoSTMSource) sortState() []*State {
+	ss := make([]*State, 0, len(g.states))
+	for k := range g.states {
+		ss = append(ss, k)
+	}
+	return ss
 }
 
 // A function to create GoSource
@@ -37,16 +48,42 @@ func NewGoPkgSource(domain string, pkgname string) *GoPkgSource {
 //   out: io.Writer
 //   name: name of STM
 //   ss: Slice of States
+//   states: Set for states
 //   ts: Slice of Transitions
+//   ex: Slice of ExTransitions
 //   initial: Initial State
 //   pkg: GoSource for Pkg
 //   root: Indicator whether the stm is root or not
 func NewGoSTMSource(name string,
-	ss []*State, ts []*Transition, initial *State, pkg *GoPkgSource, root bool) *GoSTMSource {
+	ss []*State, ts []*Transition, ex []*Transition,
+	initial *State, pkg *GoPkgSource, root bool) *GoSTMSource {
+	states := make(map[*State]struct{})
+	for _, s := range ss {
+		states[s] = struct{}{}
+	}
+	inex := make(map[*State][]*Transition)
+	outex := make(map[*State][]*Transition)
+	for _, t := range ex {
+		if _, ok := states[t.Src]; ok {
+			if _, ok := outex[t.Src]; ok {
+				outex[t.Src] = append(outex[t.Src], t)
+			} else {
+				outex[t.Src] = []*Transition{t}
+			}
+		} else if _, ok := states[t.Dest]; ok {
+			if _, ok := inex[t.Dest]; ok {
+				inex[t.Dest] = append(inex[t.Dest], t)
+			} else {
+				inex[t.Dest] = []*Transition{t}
+			}
+		}
+	}
 	return &GoSTMSource{
 		Id:      name,
-		ss:      ss,
+		states:  states,
 		ts:      makeTransitionMap(ts),
+		inexts:  inex,
+		outexts: outex,
 		initial: initial,
 		pkg:     pkg,
 		root:    root,
@@ -59,7 +96,7 @@ func NewGoSTMMap(pkg *GoPkgSource, stms map[string]*StateMachine, states map[str
 	sttree := make(map[*State][]*GoSTMSource)
 	root := &State{Name: "root"}
 	for k, s := range stms {
-		st := NewGoSTMSource(k, s.States, s.Transitions, s.Initial, pkg, false)
+		st := NewGoSTMSource(k, s.States, s.Transitions, s.ExTransitions, s.Initial, pkg, false)
 		stmap = append(stmap, st)
 		if p, ok := states[s.Parent]; ok {
 			if _, ok := sttree[p]; ok {
@@ -120,7 +157,7 @@ func (g *GoSTMSource) BaseHeader(w *Writer) {
 // A function to generate Enum for states
 func (g *GoSTMSource) BaseStateDefinition(w *Writer, names map[string]string) {
 	stm := names[g.Id]
-	ss := g.ss
+	ss := g.sortState()
 	w.writeln("type " + stm + "State uint8")
 	w.writeln("const (")
 	for i, s := range ss {
@@ -153,8 +190,10 @@ func (g *GoSTMSource) BaseStateInitialize(w *Writer, names map[string]string) {
 // A function to generate base for a given STM
 func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 	stm := names[g.Id]
-	ss := g.ss
+	ss := g.sortState()
 	ts := g.ts
+	inex := g.inexts
+	outex := g.outexts
 	if g.root {
 		w.writeln("func Entry" + stm + "Task() {")
 		w.writeln(stm + "Task()")
@@ -180,6 +219,23 @@ func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 			w.writeln("}")
 		}
 		w.writeln("}")
+		for _, t := range inex[s] {
+			tr := stm + s.Name + t.Event.Name
+			w.writeln("// external (inbound)")
+			w.writeln("if " + tr + "Cond() {")
+			w.writeln(stm + "NextState = " + stm + t.Dest.Name)
+			w.writeln(stm + "Eod = Exit")
+			w.writeln("}")
+		}
+		for _, t := range outex[s] {
+			tr := stm + s.Name + t.Event.Name
+			w.writeln("// external (outbound)")
+			w.writeln("if " + tr + "Cond() {")
+			w.writeln(tr + "Action()")
+			w.writeln(stm + "NextState = " + stm + g.initial.Name)
+			w.writeln(stm + "Eod = Exit")
+			w.writeln("}")
+		}
 		w.writeln("if " + stm + "Eod == Exit {")
 		w.writeln(stm + s.Name + "Exit()")
 		w.writeln(stm + "Eod = Entry")
@@ -192,7 +248,7 @@ func (g *GoSTMSource) BaseTransDefinition(w *Writer, names map[string]string) {
 // A function to generate base for a given STM
 func (g *GoSTMSource) UpdateDefinition(w *Writer, sttree map[*State][]*GoSTMSource, names map[string]string) {
 	stm := names[g.Id]
-	ss := g.ss
+	ss := g.sortState()
 	w.writeln("func " + stm + "Update() {")
 	w.writeln("switch " + stm + "CurrentState {")
 	for _, s := range ss {
@@ -218,8 +274,10 @@ func (g *GoSTMSource) ImplHeader(w *Writer) {
 // A function to generate template functions
 func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource, names map[string]string) {
 	stm := names[g.Id]
-	ss := g.ss
+	ss := g.sortState()
 	ts := g.ts
+	ints := g.inexts
+	outts := g.outexts
 	for _, s := range ss {
 		w.writeln("///////////////////////////////////////////////")
 		w.writeln("// functions for State " + stm + s.Name)
@@ -261,6 +319,24 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource,
 			w.writeln("return true")
 			w.writeln("}\n")
 		}
+		for _, t := range ints[s] {
+			stm2 := names[t.Src.Stm.Parent]
+			s2 := t.Src
+			tr := stm + s.Name + t.Event.Name
+			tr2 := stm2 + s2.Name + t.Event.Name
+			w.writeln("// external (inbound)")
+			w.writeln("func " + tr + "Cond() bool {")
+			w.writeln("return " + stm2 + "CurrentState == " + stm2 + s2.Name + " && " + tr2 + "Cond()")
+			w.writeln("}\n")
+		}
+		for _, t := range outts[s] {
+			tr := stm + s.Name + t.Event.Name
+			w.writeln("// external (outbound)")
+			w.writeln("func " + tr + "Cond() bool {")
+			w.writeln("// Please edit the condition")
+			w.writeln("return true")
+			w.writeln("}\n")
+		}
 	}
 	w.writeln("///////////////////////////////////////////////")
 	w.writeln("// Actions")
@@ -268,6 +344,13 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource,
 	for _, s := range ss {
 		for _, t := range ts[s] {
 			tr := stm + s.Name + t.Event.Name
+			w.writeln("func " + tr + "Action() {")
+			w.writeln("// Please edit the action when " + t.Event.Name + " occurs at State " + s.Name)
+			w.writeln("}\n")
+		}
+		for _, t := range outts[s] {
+			tr := stm + s.Name + t.Event.Name
+			w.writeln("// external (outbound)")
 			w.writeln("func " + tr + "Action() {")
 			w.writeln("// Please edit the action when " + t.Event.Name + " occurs at State " + s.Name)
 			w.writeln("}\n")
