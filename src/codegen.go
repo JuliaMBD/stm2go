@@ -231,7 +231,6 @@ func (g *GoSTMSource) BaseTransDefinitionWithExternal(w *Writer, names map[strin
 	stm := names[g.Id]
 	ss := g.sortState()
 	ts := g.ts
-	ints := g.inexts
 	outts := g.outexts
 	if g.root {
 		w.writeln("func Entry" + stm + "Task() {")
@@ -258,21 +257,16 @@ func (g *GoSTMSource) BaseTransDefinitionWithExternal(w *Writer, names map[strin
 			w.writeln("}")
 		}
 		w.writeln("}")
-		for _, t := range ints[s] {
-			tr := stm + s.Name + t.Event.Name
-			w.writeln("// external (inbound)")
-			w.writeln("if " + tr + "Cond() {")
-			w.writeln(stm + "NextState = " + stm + t.Dest.Name)
-			w.writeln(stm + "Eod = Exit")
-			w.writeln("}")
-		}
 		for _, t := range outts[s] {
 			tr := stm + s.Name + t.Event.Name
-			w.writeln("// external (outbound)")
+			w.writeln("// external")
 			w.writeln("if " + tr + "Cond() {")
 			w.writeln(tr + "Action()")
 			w.writeln(stm + "NextState = " + stm + g.initial.Name)
 			w.writeln(stm + "Eod = Exit")
+			stm2 := names[t.Dest.Stm.Parent]
+			w.writeln(stm2 + "NextState = " + stm2 + t.Dest.Name)
+			w.writeln(stm2 + "Eod = Exit")
 			w.writeln("}")
 		}
 		w.writeln("if " + stm + "Eod == Exit {")
@@ -375,7 +369,6 @@ func (g *GoSTMSource) ImplFunctionsWithExternal(w *Writer, sttree map[*State][]*
 	stm := names[g.Id]
 	ss := g.sortState()
 	ts := g.ts
-	ints := g.inexts
 	outts := g.outexts
 	for _, s := range ss {
 		w.writeln("///////////////////////////////////////////////")
@@ -418,16 +411,6 @@ func (g *GoSTMSource) ImplFunctionsWithExternal(w *Writer, sttree map[*State][]*
 			w.writeln("return true")
 			w.writeln("}\n")
 		}
-		for _, t := range ints[s] {
-			stm2 := names[t.Src.Stm.Parent]
-			s2 := t.Src
-			tr := stm + s.Name + t.Event.Name
-			tr2 := stm2 + s2.Name + t.Event.Name
-			w.writeln("// external (inbound)")
-			w.writeln("func " + tr + "Cond() bool {")
-			w.writeln("return " + stm2 + "CurrentState == " + stm2 + s2.Name + " && " + tr2 + "Cond()")
-			w.writeln("}\n")
-		}
 		for _, t := range outts[s] {
 			tr := stm + s.Name + t.Event.Name
 			w.writeln("// external (outbound)")
@@ -449,7 +432,7 @@ func (g *GoSTMSource) ImplFunctionsWithExternal(w *Writer, sttree map[*State][]*
 		}
 		for _, t := range outts[s] {
 			tr := stm + s.Name + t.Event.Name
-			w.writeln("// external (outbound)")
+			w.writeln("// external")
 			w.writeln("func " + tr + "Action() {")
 			w.writeln("// Please edit the action when " + t.Event.Name + " occurs at State " + s.Name)
 			w.writeln("}\n")
@@ -468,10 +451,12 @@ func (g *GoPkgSource) Common(w *Writer) {
 	w.writeln("Do")
 	w.writeln("Exit")
 	w.writeln(")\n")
-	w.writeln("type DebugLogger interface {\nPrintln(string)\n}\n")
+	w.writeln("type DebugLogger interface {\nPrintln(interface{})\n}\n")
 	w.writeln("var logger DebugLogger\n")
 	w.writeln("func ConfigureLog(p DebugLogger) {\nlogger = p\n}\n")
 	w.writeln("const (\ndebug = true\n)\n")
+	w.writeln("func InputDevice() {\n// Please edit to get status of input devices\n}\n")
+	w.writeln("func OutputDevice() {\n// Please edit to put status of output devices\n}\n")
 }
 
 // A function to generate an example of test code
@@ -480,7 +465,7 @@ func (g *GoPkgSource) TestGen(w *Writer, stms []*GoSTMSource, names map[string]s
 	w.writeln("package " + g.Pkgname + "\n")
 	w.writeln("import (\n\"log\"\n\"testing\"\n\"time\"\n stm2go \"github.com/JuliaMBD/stm2go/testing\"\n)\n")
 	w.writeln("type DebugStruct struct{}\n")
-	w.writeln("func (l DebugStruct) Println(s string) {")
+	w.writeln("func (l DebugStruct) Println(s interface{}) {")
 	w.writeln("log.Println(s)")
 	w.writeln("}\n")
 	w.writeln("func " + "TestExample(t *testing.T) {")
@@ -488,10 +473,12 @@ func (g *GoPkgSource) TestGen(w *Writer, stms []*GoSTMSource, names map[string]s
 	w.writeln("env := stm2go.NewTestEnv()\n")
 	w.writeln("env.Add(stm2go.Continue, func() {")
 	w.writeln("for {")
-	w.writeln("time.Sleep(10 * time.Millisecond)")
+	w.writeln("InputDevice()")
 	for _, stm := range stms {
 		w.writeln("Entry" + names[stm.Id] + "Task()")
 	}
+	w.writeln("OutputDevice()")
+	w.writeln("time.Sleep(10 * time.Millisecond)")
 	w.writeln("}")
 	w.writeln("})")
 	w.writeln("env.Add(stm2go.Done, func() {")
@@ -508,9 +495,11 @@ func (g *GoPkgSource) GenMain(w *Writer, stms []*GoSTMSource, names map[string]s
 	w.writeln("import (\"time\"\n" + g.Pkgname + " \"" + g.Fullpkgname + "/" + srcdir + "\"\n)\n")
 	w.writeln("func main() {")
 	w.writeln("for {")
+	w.writeln(g.Pkgname + ".InputDevice()")
 	for _, stm := range stms {
 		w.writeln(g.Pkgname + ".Entry" + names[stm.Id] + "Task()")
 	}
+	w.writeln(g.Pkgname + ".OutputDevice()")
 	w.writeln("time.Sleep(time.Millisecond * 10)")
 	w.writeln("}")
 	w.writeln("}")
