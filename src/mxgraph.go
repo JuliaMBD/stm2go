@@ -115,7 +115,10 @@ func getCells(data []byte) ([]MxElement, error) {
 			for _, v := range x.AnyAttr {
 				elem.Properties[v.Name.Local] = v.Value
 			}
-			if x.Cell.Edge {
+			if x.Type == "" && x.Cell.Vertex {
+				elem.Type = "vertex"
+			} else if x.Type == "" && x.Cell.Edge {
+				elem.Type = "edge"
 				elem.Properties["source"] = x.Cell.Source
 				elem.Properties["target"] = x.Cell.Target
 			}

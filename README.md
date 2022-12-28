@@ -5,7 +5,7 @@ A go package for code generation from state machine diagrams
 ## Installation
 
 ```sh
-go install github.com/JuliaMBD/stm2go
+go install github.com/JuliaMBD/stm2go@latest
 ```
 
 ## Usage
@@ -122,8 +122,6 @@ The tool provides `TestEnv` to constract the testing environemnt that controls m
 - `Go`: Running the tasks that are registered.
 - `Set`: Set timescale.
 - `Sleep`: Sleep
-- `Tick`: ?
-- `After`: ?
 
 Typically, realtime processing is required in embeddeing systems. The developed testing framework simulates realtime processing with Goroutine. For example, one task simulates the poling (event loop) for embeded system and another task simulates the user behavior such as pushing buttons.
 
