@@ -246,9 +246,6 @@ func cmdgen(args []string) {
 	}
 
 	fmt.Println("Code generation done.")
-
-	fmt.Println("Please execute:")
-	fmt.Println("    go mod init " + pkg.Fullpkgname + "; go mod tidy")
 }
 
 func cmdmain(args []string) {
@@ -304,6 +301,9 @@ func cmdmain(args []string) {
 		fmt.Println("File " + fn + " exists. Skip creating.")
 	}
 	fmt.Println("Code generation done.")
+
+	fmt.Println("Please execute:")
+	fmt.Println("    go mod init " + pkg.Fullpkgname + "; go mod tidy")
 }
 
 func cmdexample(args []string) {

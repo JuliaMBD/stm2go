@@ -146,6 +146,12 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 				Event: edges[x.Id],
 			}
 			smevents[key{s1, edges[x.Id]}] = struct{}{}
+			if v, ok := x.Properties["guard"]; ok {
+				t.Event.Cond = v
+			}
+			if v, ok := x.Properties["action"]; ok {
+				t.Event.Action = v
+			}
 			s1.ExTransitions = append(s1.ExTransitions, t)
 			s2.ExTransitions = append(s2.ExTransitions, t)
 		} else if ok3 && ok2 && isrc.Parent == dest.Parent && isrc.Parent == x.Parent {

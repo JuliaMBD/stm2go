@@ -1,3 +1,7 @@
+# stm2go 0.4.0
+
+- Write codes on diagrams
+
 # stm2go 0.3.2
 
 - Add nextState
