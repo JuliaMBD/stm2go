@@ -52,7 +52,6 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 	// logger.SetOutput(io.Discard)
 	states := make(map[string]*State)
 	mxstates := make(map[string]*MxElement)
-	events := make(map[string]*Event)
 	edges := make(map[string]*Event)
 	istates := make(map[string]*MxElement)
 	transitions := make([]*MxElement, 0)
@@ -62,8 +61,6 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 	}
 	sm := make(map[string]*StateMachine)
 	for i, x := range elems {
-		// logger.Println("Elem ", x.Type)
-		// logger.Println(x)
 		switch x.Type {
 		case "state":
 			logger.Printf("Detect a state: %s-%s %s\n", x.Parent, x.Id, x.Value)
@@ -94,19 +91,21 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 			switch x.getNode() {
 			case "edgeLabel":
 				logger.Printf("Detect an event: %s\n", x.Value)
-				if e, ok := events[x.Value]; ok {
-					edges[x.Parent] = e
-				} else {
-					e := &Event{
-						Name: x.Value,
-					}
-					events[x.Value] = e
-					edges[x.Parent] = e
+				e := &Event{
+					Name: x.Value,
 				}
+				edges[x.Parent] = e
 			default:
 			}
 		case "edge":
 			transitions = append(transitions, &elems[i])
+			if x.Value != "" {
+				logger.Printf("Detect an event: %s\n", x.Value)
+				e := &Event{
+					Name: x.Value,
+				}
+				edges[x.Id] = e
+			}
 		default:
 		}
 	}

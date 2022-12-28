@@ -94,7 +94,7 @@ func NewGoSTMSource(name string,
 func NewGoSTMMap(pkg *GoPkgSource, stms map[string]*StateMachine, states map[string]*State) ([]*GoSTMSource, map[*State][]*GoSTMSource, *State) {
 	stmap := make([]*GoSTMSource, 0)
 	sttree := make(map[*State][]*GoSTMSource)
-	root := &State{Name: "root"}
+	root := &State{Name: "Root"}
 	for k, s := range stms {
 		st := NewGoSTMSource(k, s.States, s.Transitions, s.ExTransitions, s.Initial, pkg, false)
 		stmap = append(stmap, st)
