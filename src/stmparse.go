@@ -28,12 +28,17 @@ func NewStateMachine(parent string) *StateMachine {
 }
 
 type State struct {
-	Name string
-	Stm  *StateMachine
+	Name  string
+	Stm   *StateMachine
+	Entry string
+	Do    string
+	Exit  string
 }
 
 type Event struct {
-	Name string
+	Name   string
+	Cond   string
+	Action string
 }
 
 type Transition struct {
@@ -57,6 +62,8 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 	}
 	sm := make(map[string]*StateMachine)
 	for i, x := range elems {
+		// logger.Println("Elem ", x.Type)
+		// logger.Println(x)
 		switch x.Type {
 		case "state":
 			logger.Printf("Detect a state: %s-%s %s\n", x.Parent, x.Id, x.Value)
@@ -64,7 +71,19 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 			if _, ok := sm[p]; ok == false {
 				sm[p] = NewStateMachine(p)
 			}
-			s := &State{x.Value, sm[p]}
+			s := &State{
+				Name: x.Value,
+				Stm:  sm[p],
+			}
+			if v, ok := x.Properties["entry"]; ok {
+				s.Entry = v
+			}
+			if v, ok := x.Properties["do"]; ok {
+				s.Do = v
+			}
+			if v, ok := x.Properties["exit"]; ok {
+				s.Exit = v
+			}
 			sm[p].States = append(sm[p].States, s)
 			states[x.Id] = s
 			mxstates[x.Id] = &elems[i]
@@ -78,7 +97,9 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 				if e, ok := events[x.Value]; ok {
 					edges[x.Parent] = e
 				} else {
-					e := &Event{x.Value}
+					e := &Event{
+						Name: x.Value,
+					}
 					events[x.Value] = e
 					edges[x.Parent] = e
 				}
@@ -109,9 +130,15 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 				Event: edges[x.Id],
 			}
 			smevents[key{s, edges[x.Id]}] = struct{}{}
+			if v, ok := x.Properties["guard"]; ok {
+				t.Event.Cond = v
+			}
+			if v, ok := x.Properties["action"]; ok {
+				t.Event.Action = v
+			}
 			s.Transitions = append(s.Transitions, t)
 		} else if ok1 && ok2 && src.Parent != dest.Parent {
-			logger.Printf("Find a transition accossing STMs between %s and %s\n", src.Parent, dest.Parent)
+			logger.Printf("Find an external transition accossing STMs between %s and %s\n", src.Parent, dest.Parent)
 			s1 := sm[src.Parent]
 			s2 := sm[dest.Parent]
 			t := &Transition{

@@ -322,7 +322,11 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource,
 		w.writeln("if debug {")
 		w.writeln("logger.Println(\"Entering State " + stm + s.Name + "\")")
 		w.writeln("}")
-		w.writeln("// Please write an enter process for State " + stm + s.Name)
+		if s.Entry == "" {
+			w.writeln("// Please write an enter process for State " + stm + s.Name)
+		} else {
+			w.writeln(s.Entry)
+		}
 		w.writeln("}\n")
 		w.writeln("func " + stm + s.Name + "Do() {")
 		if stms, ok := sttree[s]; ok {
@@ -330,13 +334,21 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource,
 				w.writeln(names[stm.Id] + "Task() // Call the task for " + names[stm.Id])
 			}
 		}
-		w.writeln("// Please write a do process for State " + stm + s.Name)
+		if s.Do == "" {
+			w.writeln("// Please write a do process for State " + stm + s.Name)
+		} else {
+			w.writeln(s.Do)
+		}
 		w.writeln("}\n")
 		w.writeln("func " + stm + s.Name + "Exit() {")
 		w.writeln("if debug {")
 		w.writeln("logger.Println(\"Leaving State " + stm + s.Name + "\")")
 		w.writeln("}")
-		w.writeln("// Please write an exit process for State " + stm + s.Name)
+		if s.Exit == "" {
+			w.writeln("// Please write an exit process for State " + stm + s.Name)
+		} else {
+			w.writeln(s.Exit)
+		}
 		w.writeln("}\n")
 	}
 	w.writeln("///////////////////////////////////////////////")
@@ -346,8 +358,12 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource,
 		for _, t := range ts[s] {
 			tr := stm + s.Name + t.Event.Name
 			w.writeln("func " + tr + "Cond() bool {")
-			w.writeln("// Please edit the condition")
-			w.writeln("return true")
+			if t.Event.Cond == "" {
+				w.writeln("// Please edit the condition")
+				w.writeln("return true")
+			} else {
+				w.writeln("return " + t.Event.Cond)
+			}
 			w.writeln("}\n")
 		}
 	}
@@ -358,7 +374,11 @@ func (g *GoSTMSource) ImplFunctions(w *Writer, sttree map[*State][]*GoSTMSource,
 		for _, t := range ts[s] {
 			tr := stm + s.Name + t.Event.Name
 			w.writeln("func " + tr + "Action() {")
-			w.writeln("// Please edit the action when " + t.Event.Name + " occurs at State " + s.Name)
+			if t.Event.Action == "" {
+				w.writeln("// Please edit the action when " + t.Event.Name + " occurs at State " + s.Name)
+			} else {
+				w.writeln(t.Event.Action)
+			}
 			w.writeln("}\n")
 		}
 	}
