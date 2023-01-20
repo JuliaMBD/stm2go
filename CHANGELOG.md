@@ -1,3 +1,15 @@
+# stm2go 0.4.0
+
+- Write codes on diagrams
+
+# stm2go 0.3.2
+
+- Add nextState
+- Remove Tick and After
+- Modify README.md
+- Initilize EOD
+- Add external transitions (experimental)
+
 # stm2go 0.3.1
 
 - bug fix

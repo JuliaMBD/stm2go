@@ -8,29 +8,37 @@ import (
 var logger *log.Logger
 
 type StateMachine struct {
-	Parent      string
-	States      []*State
-	Events      []*Event
-	Transitions []*Transition
-	Initial     *State
+	Parent        string
+	States        []*State
+	Events        []*Event
+	Transitions   []*Transition
+	ExTransitions []*Transition
+	Initial       *State
 }
 
 func NewStateMachine(parent string) *StateMachine {
 	return &StateMachine{
-		Parent:      parent,
-		States:      make([]*State, 0),
-		Events:      make([]*Event, 0),
-		Transitions: make([]*Transition, 0),
-		Initial:     nil,
+		Parent:        parent,
+		States:        make([]*State, 0),
+		Events:        make([]*Event, 0),
+		Transitions:   make([]*Transition, 0),
+		ExTransitions: make([]*Transition, 0),
+		Initial:       nil,
 	}
 }
 
 type State struct {
-	Name string
+	Name  string
+	Stm   *StateMachine
+	Entry string
+	Do    string
+	Exit  string
 }
 
 type Event struct {
-	Name string
+	Name   string
+	Cond   string
+	Action string
 }
 
 type Transition struct {
@@ -44,7 +52,6 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 	// logger.SetOutput(io.Discard)
 	states := make(map[string]*State)
 	mxstates := make(map[string]*MxElement)
-	events := make(map[string]*Event)
 	edges := make(map[string]*Event)
 	istates := make(map[string]*MxElement)
 	transitions := make([]*MxElement, 0)
@@ -61,7 +68,19 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 			if _, ok := sm[p]; ok == false {
 				sm[p] = NewStateMachine(p)
 			}
-			s := &State{x.Value}
+			s := &State{
+				Name: x.Value,
+				Stm:  sm[p],
+			}
+			if v, ok := x.Properties["entry"]; ok {
+				s.Entry = v
+			}
+			if v, ok := x.Properties["do"]; ok {
+				s.Do = v
+			}
+			if v, ok := x.Properties["exit"]; ok {
+				s.Exit = v
+			}
 			sm[p].States = append(sm[p].States, s)
 			states[x.Id] = s
 			mxstates[x.Id] = &elems[i]
@@ -72,17 +91,21 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 			switch x.getNode() {
 			case "edgeLabel":
 				logger.Printf("Detect an event: %s\n", x.Value)
-				if e, ok := events[x.Value]; ok {
-					edges[x.Parent] = e
-				} else {
-					e := &Event{x.Value}
-					events[x.Value] = e
-					edges[x.Parent] = e
+				e := &Event{
+					Name: x.Value,
 				}
+				edges[x.Parent] = e
 			default:
 			}
 		case "edge":
 			transitions = append(transitions, &elems[i])
+			if x.Value != "" {
+				logger.Printf("Detect an event: %s\n", x.Value)
+				e := &Event{
+					Name: x.Value,
+				}
+				edges[x.Id] = e
+			}
 		default:
 		}
 	}
@@ -106,11 +129,37 @@ func Parse(data []byte) (map[string]*StateMachine, map[string]*State) {
 				Event: edges[x.Id],
 			}
 			smevents[key{s, edges[x.Id]}] = struct{}{}
+			if v, ok := x.Properties["guard"]; ok {
+				t.Event.Cond = v
+			}
+			if v, ok := x.Properties["action"]; ok {
+				t.Event.Action = v
+			}
 			s.Transitions = append(s.Transitions, t)
+		} else if ok1 && ok2 && src.Parent != dest.Parent {
+			logger.Printf("Find an external transition accossing STMs between %s and %s\n", src.Parent, dest.Parent)
+			s1 := sm[src.Parent]
+			s2 := sm[dest.Parent]
+			t := &Transition{
+				Src:   states[src.Id],
+				Dest:  states[dest.Id],
+				Event: edges[x.Id],
+			}
+			smevents[key{s1, edges[x.Id]}] = struct{}{}
+			if v, ok := x.Properties["guard"]; ok {
+				t.Event.Cond = v
+			}
+			if v, ok := x.Properties["action"]; ok {
+				t.Event.Action = v
+			}
+			s1.ExTransitions = append(s1.ExTransitions, t)
+			s2.ExTransitions = append(s2.ExTransitions, t)
 		} else if ok3 && ok2 && isrc.Parent == dest.Parent && isrc.Parent == x.Parent {
 			// set initital
 			s := sm[isrc.Parent]
 			s.Initial = states[dest.Id]
+		} else {
+			logger.Println("Ignoring a transition ", x)
 		}
 	}
 	for k, _ := range smevents {

@@ -33,7 +33,8 @@ func usage() {
 
 commands: (command help: stm2go command -h)
   init      Initialize directories.
-  generate  Generate Go source files from draw.io/diagrams.net file.
+  generate  Generate Go source files (base and impl) from draw.io/diagrams.net file.
+  main      Generate a template of main.go from draw.io/diagrams.net file.
   example   Generate an example of draw.io/diagrams.net file.
   help      Display this message.`
 
@@ -51,6 +52,8 @@ func main() {
 			cmdinit(args)
 		case "generate":
 			cmdgen(args)
+		case "main":
+			cmdmain(args)
 		case "example":
 			cmdexample(args)
 		case "help":
@@ -87,10 +90,10 @@ func cmdinit(args []string) {
 
 func cmdgen(args []string) {
 	var force bool
-	var mainfn string
+	var external bool
 	flag.StringVar(&srcdir, "d", "src", "Name of src directory. Default is src.")
 	flag.BoolVar(&force, "f", false, "Flag to overwrite Go sources excluding main file.")
-	flag.StringVar(&mainfn, "main", "main.go", "Name of main file. Default is main.go.")
+	flag.BoolVar(&external, "e", false, "Flag to allow external transitions.")
 	flag.CommandLine.Parse(args)
 
 	// Read config
@@ -191,7 +194,12 @@ func cmdgen(args []string) {
 				s.BaseHeader(w)
 				s.BaseStateDefinition(w, names)
 				s.BaseStateInitialize(w, names)
-				s.BaseTransDefinition(w, names)
+				if external {
+					s.BaseTransDefinitionWithExternal(w, names)
+				} else {
+					s.BaseTransDefinition(w, names)
+				}
+				s.UpdateDefinition(w, sttree, names)
 				f.Close()
 			} else {
 				fmt.Println("Fail to create " + fn)
@@ -207,7 +215,11 @@ func cmdgen(args []string) {
 			if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664); err == nil {
 				w := stm2go.NewWriter(f)
 				s.ImplHeader(w)
-				s.ImplFunctions(w, sttree, names)
+				if external {
+					s.ImplFunctionsWithExternal(w, sttree, names)
+				} else {
+					s.ImplFunctions(w, sttree, names)
+				}
 				f.Close()
 			} else {
 				fmt.Println("Fail to create " + fn)
@@ -218,7 +230,7 @@ func cmdgen(args []string) {
 		}
 	}
 
-	// generate test and main files
+	// generate test file
 	fn = srcdir + "/" + pkg.Pkgname + "_test.go"
 	if force == true || !fileExists(fn) {
 		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664); err == nil {
@@ -233,8 +245,49 @@ func cmdgen(args []string) {
 		fmt.Println("File " + fn + " exists. Skip creating.")
 	}
 
-	fn = mainfn
-	if !fileExists(fn) {
+	fmt.Println("Code generation done.")
+}
+
+func cmdmain(args []string) {
+	var force bool
+	flag.BoolVar(&force, "f", false, "Flag to overwrite Go sources excluding main file.")
+	flag.CommandLine.Parse(args)
+
+	// Read config
+	if !fileExists(config_file) {
+		fmt.Println("Did not find " + config_file + ".")
+		fmt.Println("Probably this is not a directory for stm2go.")
+		os.Exit(1)
+	}
+	if raw, err := os.ReadFile(config_file); err == nil {
+		json.Unmarshal(raw, &pkg)
+	} else {
+		fmt.Println("Fail to read " + config_file)
+		os.Exit(1)
+	}
+
+	// Read XML
+	infile := flag.Arg(0)
+	if infile == "" {
+		fmt.Println("The name of xml file is not detected. Use the default xmlfile '" + default_xmlname + "'")
+		infile = default_packagename
+	}
+	if !fileExists(infile) {
+		fmt.Println("Did not find XML file: " + infile)
+		os.Exit(1)
+	}
+	xml, err := os.ReadFile(infile)
+	if err != nil {
+		fmt.Println("Fail to read XML file: " + infile)
+		os.Exit(1)
+	}
+
+	// Parse XML
+	stms, states := stm2go.Parse(xml)
+	_, sttree, root := stm2go.NewGoSTMMap(pkg, stms, states)
+
+	fn := "main.go"
+	if force == true || !fileExists(fn) {
 		if f, err := os.OpenFile(fn, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0664); err == nil {
 			w := stm2go.NewWriter(f)
 			pkg.GenMain(w, sttree[root], names)
@@ -247,7 +300,6 @@ func cmdgen(args []string) {
 	} else {
 		fmt.Println("File " + fn + " exists. Skip creating.")
 	}
-
 	fmt.Println("Code generation done.")
 
 	fmt.Println("Please execute:")
